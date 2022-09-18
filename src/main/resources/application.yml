@@ -1,1 +1,17 @@
+spring:
+  datasource:
+    username: root
+    password:
+    url: jdbc:mariadb://localhost:3306/test?characterEncoding=UTF-8&serverTimezone=UTF-8 # test 대신 로컬에서 사용하는 데이터베이스명 입력할 것
+    driver-class-name: org.mariadb.jdbc.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true # ddl 쿼리에 대해 콘솔에 직접 출력하는 것이 아닌 로그로 출력
+
+logging:
+  level:
+    org.hibernate.SQL: debug # dml 쿼리에 대해 debug 이상의 로그 출력
