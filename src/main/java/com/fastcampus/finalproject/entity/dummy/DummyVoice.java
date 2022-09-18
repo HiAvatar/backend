@@ -19,4 +19,6 @@ public class DummyVoice {
     private String sex;
 
     private String previewAudio;
+
+    private String tags;
 }
