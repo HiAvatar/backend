@@ -13,8 +13,10 @@ public class UserBasic {
     @Column(name = "USER_UID")
     private Long uid;
 
+    @Column(nullable = false)
     private String userName;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private LoginType loginType;
 }

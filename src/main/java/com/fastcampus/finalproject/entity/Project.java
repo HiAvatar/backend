@@ -13,9 +13,13 @@ public class Project extends BaseTimeEntity {
     @Column(name = "PROJECT_ID")
     private Long id;
 
-    @Column(name = "PROJECT_NAME")
+    @Column(name = "PROJECT_NAME", nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String totalAudioUrl;
+
+    @Column(nullable = false)
     private String audioFileName;
 
     @Embedded

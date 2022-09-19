@@ -13,11 +13,13 @@ public class Video extends BaseTimeEntity {
     @Column(name = "VIDEO_ID")
     private Long id;
 
-    @Column(name = "VIDEO_NAME")
+    @Column(name = "VIDEO_NAME", nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String thumbnail;
 
+    @Column(nullable = false)
     private String videoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
