@@ -1,6 +1,7 @@
 package com.fastcampus.finalproject.controller;
 
 import com.fastcampus.finalproject.dto.ResponseWrapper;
+import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.repository.UserRepository;
 import com.fastcampus.finalproject.service.ProjectService;
@@ -18,10 +19,16 @@ public class ProjectController {
     private static final Long userUid = 1L;
 
     //init data
-    @GetMapping("/login")
+    @GetMapping("/login-test")
     public ResponseWrapper<Void> login() {
         userRepository.save(new UserBasic("userA"));
         return new ResponseWrapper<Void>()
+                .ok();
+    }
+
+    @GetMapping("/projects")
+    public ResponseWrapper<GetHistoryResponse> getHistory() {
+        return new ResponseWrapper<>(projectService.getHistory(userUid))
                 .ok();
     }
 }
