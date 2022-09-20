@@ -2,6 +2,7 @@ package com.fastcampus.finalproject.controller;
 
 import com.fastcampus.finalproject.dto.ResponseWrapper;
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
+import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
 import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
 import com.fastcampus.finalproject.entity.UserBasic;
@@ -46,5 +47,10 @@ public class ProjectController {
     public ResponseWrapper<GetTextPageResponse> getTextPage(@PathVariable Long projectId) {
         return new ResponseWrapper<>(projectService.getTextPageData(1L, projectId))
                 .ok();
+    }
+
+    @GetMapping("/projects/{projectId}/avatar")
+    public ResponseWrapper<GetAvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
+        return new ResponseWrapper<>(projectService.getAvatarPageData(1L, projectId)).ok();
     }
 }
