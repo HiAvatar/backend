@@ -1,4 +1,4 @@
-package com.fastcampus.finalproject.config.filter;
+package com.fastcampus.finalproject.config.jwt.filter;
 
 import com.fastcampus.finalproject.dto.request.AuthenticationDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +31,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         return this.getAuthenticationManager().authenticate(authToken);
     }
+
 
 
 }
