@@ -1,35 +1,28 @@
 package com.fastcampus.finalproject.config.filter;
 
+import com.fastcampus.finalproject.dto.request.AuthenticationDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 
-public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
-
-    protected CustomUsernamePasswordAuthenticationFilter() {
-        super(new AntPathRequestMatcher("/login", "POST"));
-    }
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
-
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         String id;
         String password;
 
         try {
-            Map<String, String> requestMap = new ObjectMapper().readValue(request.getInputStream(), Map.class);
-            id = requestMap.get("id");
-            password = requestMap.get("password");
+            AuthenticationDto authInfo = new ObjectMapper().readValue(request.getInputStream(), AuthenticationDto.class);
+            id = authInfo.getId();
+            password = authInfo.getPassword();
         } catch (IOException e) {
             throw new AuthenticationServiceException(e.getMessage(), e);
         }
@@ -38,4 +31,6 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
 
         return this.getAuthenticationManager().authenticate(authToken);
     }
+
+
 }
