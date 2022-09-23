@@ -51,4 +51,8 @@ public class Project extends BaseTimeEntity {
     public void initProjectName(String name) {
         this.name = name;
     }
+
+    public void changeTotalAudioURl(String totalAudioUrl) {
+        this.totalAudioUrl = totalAudioUrl;
+    }
 }
