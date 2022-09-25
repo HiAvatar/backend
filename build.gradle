@@ -33,3 +33,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+//jenkins 이용 시, Dockerfile에 있는 COPY 명령어 관련 이슈 해결을 위한 코드 추가
+// solution: ./gradlew build를 수행하면 jar 파일이 2개가 생성되므로 의존성이 포함되지 않은 plain.jar 생성 방지
+jar {
+	enabled = false
+}
