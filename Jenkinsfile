@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'backend-spring'
-				CONTAINER_NAME = 'backend-spring-app'
+	CONTAINER_NAME = 'backend-spring-app'
         DOCKERHUB_CREDENTIAL = 'docker-hub'
-				DOCKERHUB_ID = 'parkminho'
-				GITHUB_REPOSITORY_CREDENTIAL = 'facam_ci_cd'
-				GITHUB_REPOSITORY_URL = 'https://github.com/HiAvatar/backend.git'
-				GITHUB_REPOSITORY_SSH = 'git@github.com:HiAvatar/backend.git'
-				GITHUB_TARGET_BRANCH = 'develop'
+	DOCKERHUB_ID = 'parkminho'
+	GITHUB_REPOSITORY_CREDENTIAL = '19609f81-8dba-4208-ab2e-21e113ee3b30'
+	GITHUB_REPOSITORY_URL = 'https://github.com/HiAvatar/backend.git'
+	GITHUB_REPOSITORY_SSH = 'git@github.com:HiAvatar/backend.git'
+	GITHUB_TARGET_BRANCH = 'develop'
         dockerImage = ''
     }
 
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 echo 'Build Gradle'
                 dir('.') {
-										sh 'cp /var/jenkins_home/deploy/application.yml ./src/main/resources'
+		    sh 'cp /var/jenkins_home/deploy/application.yml ./src/main/resources'
                     sh './gradlew clean build'
                 }
             }
