@@ -23,9 +23,13 @@ public class UserBasic {
     @Enumerated(EnumType.STRING)
     private LoginType loginType;
 
-    //로그인을 위한 임시 생성자
-    public UserBasic(String userName) {
+
+    public UserBasic(String userName, LoginType loginType) {
         this.userName = userName;
-        this.loginType = LoginType.NATIVE;
+        this.loginType = loginType;
+    }
+
+    public UserBasic(Long uid) {
+        this.uid = uid;
     }
 }
