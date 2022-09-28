@@ -6,31 +6,10 @@ pipeline {
 	CONTAINER_NAME = 'backend-spring-app'
         DOCKERHUB_CREDENTIAL = 'docker-hub'
 	DOCKERHUB_ID = 'parkminho'
-	GITHUB_REPOSITORY_CREDENTIAL = '19609f81-8dba-4208-ab2e-21e113ee3b30'
-	GITHUB_REPOSITORY_URL = 'https://github.com/HiAvatar/backend.git'
-	GITHUB_REPOSITORY_SSH = 'git@github.com:HiAvatar/backend.git'
-	GITHUB_TARGET_BRANCH = 'develop'
         dockerImage = ''
     }
 
     stages {
-        stage('Cloning Git Repository') {
-            steps {
-                echo 'Cloning Repository'
-                git url: "${GITHUB_REPOSITORY_SSH}",
-                branch: "${GITHUB_TARGET_BRANCH}",
-                credentialsId: "${GITHUB_REPOSITORY_CREDENTIAL}"
-            }
-            post {
-                success {
-                    echo 'Successfully Cloned Repository'
-                }
-           	    failure {
-                    error 'This pipeline stops here...'
-                }
-            }
-       }
-
         stage('Build Gradle') {
             steps {
                 echo 'Build Gradle'
