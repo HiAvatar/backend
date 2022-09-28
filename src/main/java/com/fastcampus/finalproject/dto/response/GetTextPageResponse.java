@@ -38,9 +38,15 @@ public class GetTextPageResponse {
     @Data
     public static class TextDto {
 
+        private Integer sentenceId;
         private String text;
-        private String audioUrl;
-        private String sentenceSpacing;
+        private Integer sentenceSpacing;
+
+        public TextDto(Integer sentenceId, String text, Integer sentenceSpacing) {
+            this.sentenceId = sentenceId;
+            this.text = text;
+            this.sentenceSpacing = sentenceSpacing;
+        }
     }
 
     @Data
