@@ -35,6 +35,9 @@ public class Audio {
     @Column(columnDefinition = "TINYINT", nullable = false)
     private Integer sentenceSpacing;
 
+    @Column(nullable = false)
+    private String sentenceSpacingList;
+
     @Lob
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String texts;
@@ -46,6 +49,7 @@ public class Audio {
         this.speed = DEFAULT_CONTROL;
         this.pitch = DEFAULT_CONTROL;
         this.sentenceSpacing = DEFAULT_CONTROL;
+        this.sentenceSpacingList = EMPTY.getValue();
         this.texts = EMPTY.getValue();
     }
 }
