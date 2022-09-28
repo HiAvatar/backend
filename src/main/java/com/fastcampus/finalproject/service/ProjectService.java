@@ -2,10 +2,8 @@ package com.fastcampus.finalproject.service;
 
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
-import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarDivisionDto;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
 import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
-import com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
@@ -20,14 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.*;
-import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarDto;
-import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarPageDummyDto;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -44,6 +40,7 @@ public class ProjectService {
     private final DummyAvatarListRepository dummyAvatarListRepository;
     private final DummyAvatarDivisionRepository dummyAvatarDivisionRepository;
     private final DummyBackgroundRepository dummyBackgroundRepository;
+    private final FlaskCommunicationService flaskCommunicationService;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 7;
@@ -79,12 +76,22 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long userId, Long projectId) {
-
         Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
                 .orElseThrow(NoSuchElementException::new);
 
-        //TODO api 내 api 호출로 해야 splitTextList 구현 가능
-        List<TextDto> splitTextList = Collections.emptyList();
+        //Test Data
+        String temp = "하. 하이. 하하이. 하하하이. 하하하하이. 하하하하하이. 하하하하하하이. 하이 하이";
+        List<Integer> sentenceSpacingList = Stream.of("0","1","2","3","2","3","-2","-1").map(Integer::parseInt).collect(Collectors.toList());
+
+        //List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
+        //List<String> sentenceSpacingList = Stream.of(findProject.getAudio().getSentenceSpacingList().split("\\|")).collect(Collectors.toList());
+
+        List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
+
+        List<TextDto> splitTextList = new ArrayList<>();
+        for (int i = 0; i < textList.size(); i++) {
+            splitTextList.add(new TextDto(i+1, textList.get(i), sentenceSpacingList.get(i)));
+        }
 
         List<DummyVoice> koreanList = dummyVoiceRepository.findAllByLanguage(KOREAN.getValue());
         List<DummyVoice> englishList = dummyVoiceRepository.findAllByLanguage(ENGLISH.getValue());
