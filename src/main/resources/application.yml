@@ -18,6 +18,10 @@ spring:
 
     defer-datasource-initialization: true # 하이버네이트가 먼저 실행되고 이후에 *.sql이 실행되기 위한 코드
 
+  redis:
+    host: localHost
+    port: 6379
+
 logging:
   level:
     org.hibernate.SQL: debug # dml 쿼리에 대해 debug 이상의 로그 출력
