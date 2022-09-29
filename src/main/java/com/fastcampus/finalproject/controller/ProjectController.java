@@ -6,12 +6,11 @@ import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
 import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
+import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
+import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.service.ProjectService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +38,13 @@ public class ProjectController {
 
     @GetMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<GetAvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
-        return new ResponseWrapper<>(projectService.getAvatarPageData(AuthUtil.getCurrentUserUid(), projectId)).ok();
+        return new ResponseWrapper<>(projectService.getAvatarPageData(AuthUtil.getCurrentUserUid(), projectId))
+                .ok();
+    }
+
+    @PostMapping("/projects/avatar-preview")
+    public ResponseWrapper<GetAvatarPreviewResponse> getAvatarPreview(@RequestBody GetAvatarPreviewRequest request) {
+        return new ResponseWrapper<>(projectService.getAvatarPreview(request))
+                .ok();
     }
 }
