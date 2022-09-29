@@ -6,6 +6,7 @@ pipeline {
 	CONTAINER_NAME = 'backend-spring-app'
         DOCKERHUB_CREDENTIAL = 'docker-hub'
 	DOCKERHUB_ID = 'parkminho'
+	DEPLOY_PATH = '/var/jenkins_home/deploy'
         dockerImage = ''
     }
 
@@ -14,7 +15,7 @@ pipeline {
             steps {
                 echo 'Build Gradle'
                 dir('.') {
-		    sh 'cp /var/jenkins_home/deploy/application.yml ./src/main/resources'
+		    sh "cp ${DEPLOY_PATH}/application.yml ./src/main/resources"
                     sh './gradlew clean build'
                 }
             }
@@ -58,15 +59,15 @@ pipeline {
         stage('Docker Run') {
             steps {
                 echo 'Pull Docker Image & Docker Run'
-                dir('.') {
+                dir("${DEPLOY_PATH}") {
                     sh "docker pull ${DOCKERHUB_ID}/${IMAGE_NAME}"
-                    sh "docker stop ${CONTAINER_NAME} || true"
-                    sh "docker run -p 8080:8080 --rm -d --network ec2-user_default --name ${CONTAINER_NAME} ${DOCKERHUB_ID}/${IMAGE_NAME}"
-                    sh "docker logs ${CONTAINER_NAME}"
+                    sh "docker-compose stop ${CONTAINER_NAME}"
+		    sh "docker-compose up -d"
                 }
             }
         }
     }
+	
 		post {
 		    success {
 		        slackSend (channel: '#jenkins-log', color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
