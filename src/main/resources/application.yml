@@ -21,3 +21,8 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug # dml 쿼리에 대해 debug 이상의 로그 출력
+
+local-file:
+  path: /Users/mhpark/Downloads/fastcampus/data/
+  under-bar: _
+  extension: .png
