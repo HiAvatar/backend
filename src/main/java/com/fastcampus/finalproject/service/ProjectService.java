@@ -1,9 +1,8 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
-import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
-import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
-import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
+import com.fastcampus.finalproject.config.YmlLocalFileConfig;
+import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
+import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
@@ -12,12 +11,17 @@ import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -41,6 +45,8 @@ public class ProjectService {
     private final DummyAvatarDivisionRepository dummyAvatarDivisionRepository;
     private final DummyBackgroundRepository dummyBackgroundRepository;
     private final FlaskCommunicationService flaskCommunicationService;
+
+    private final YmlLocalFileConfig localFileConfig;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 7;
@@ -149,5 +155,25 @@ public class ProjectService {
         return avatarDivisions.stream()
                 .filter(a -> a.getPosition().contains(s))
                 .map(AvatarDivisionDto::new).collect(Collectors.toList());
+    }
+
+    public GetAvatarPreviewResponse getAvatarPreview(GetAvatarPreviewRequest request) {
+        String filepath = localFileConfig.createFilePath(request.getAvatarType(), request.getBgName());
+        byte[] fileBinary = getFileBinary(filepath);
+        String base64String = Base64.getEncoder().encodeToString(fileBinary);
+
+        return new GetAvatarPreviewResponse(base64String);
+    }
+
+    private static byte[] getFileBinary(String filepath) {
+        File file = new File(filepath);
+        byte[] bytes = new byte[(int) file.length()];
+
+        try(FileInputStream stream = new FileInputStream(file)) {
+            stream.read(bytes, 0, bytes.length);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return bytes;
     }
 }
