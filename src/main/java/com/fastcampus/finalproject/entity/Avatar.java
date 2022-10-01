@@ -1,6 +1,6 @@
 package com.fastcampus.finalproject.entity;
 
-import com.fastcampus.finalproject.enums.ProjectDefaultType;
+import com.fastcampus.finalproject.dto.request.AvatarInfoRequest;
 import lombok.Getter;
 
 import javax.persistence.Column;
@@ -25,5 +25,11 @@ public class Avatar {
         this.name = EMPTY.getValue();
         this.type = EMPTY.getValue();
         this.background = BACKGROUND.getValue();
+    }
+
+    public void changeAvatarInfo(AvatarInfoRequest request) {
+        this.name = request.getAvatarName();
+        this.type = request.getAvatarType();
+        this.background = request.getBgName();
     }
 }
