@@ -1,6 +1,6 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.config.YmlLocalFileConfig;
+import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.Project;
@@ -45,7 +45,7 @@ public class ProjectService {
     private final DummyBackgroundRepository dummyBackgroundRepository;
     private final FlaskCommunicationService flaskCommunicationService;
 
-    private final YmlLocalFileConfig localFileConfig;
+    private final YmlFlaskConfig localFileConfig;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 7;

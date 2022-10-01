@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "local-file")
+@ConfigurationProperties(prefix = "flask-communication")
 @Getter
 @Setter
-public class YmlLocalFileConfig {
+public class YmlFlaskConfig {
 
     private String imagePath;
     private String filePath;
@@ -19,6 +19,8 @@ public class YmlLocalFileConfig {
     private String imageExtension;
     private String audioExtension;
     private String videoExtension;
+    private String requestAudioApi;
+    private String requestVideoApi;
 
     public String createImageFilePath(String avatarType, String bgName) {
         return this.imagePath + avatarType + this.underBar + bgName + this.imageExtension;
