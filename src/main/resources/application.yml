@@ -27,6 +27,9 @@ logging:
     org.hibernate.SQL: debug # dml 쿼리에 대해 debug 이상의 로그 출력
 
 local-file:
-  path: /Users/mhpark/Downloads/fastcampus/data/
+  image-path: /Users/mhpark/Downloads/fastcampus/data/
+  file-path: /Users/mhpark/Downloads/fastcampus/result/
   under-bar: _
-  extension: .png
+  image-extension: .png
+  audio-extension: .wav
+  video-extension: .mp4

@@ -11,7 +11,6 @@ import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,7 +157,7 @@ public class ProjectService {
     }
 
     public GetAvatarPreviewResponse getAvatarPreview(GetAvatarPreviewRequest request) {
-        String filepath = localFileConfig.createFilePath(request.getAvatarType(), request.getBgName());
+        String filepath = localFileConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
         byte[] fileBinary = getFileBinary(filepath);
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 

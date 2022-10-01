@@ -13,11 +13,14 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class YmlLocalFileConfig {
 
-    private String path;
+    private String imagePath;
+    private String filePath;
     private String underBar;
-    private String extension;
+    private String imageExtension;
+    private String audioExtension;
+    private String videoExtension;
 
-    public String createFilePath(String avatarType, String bgName) {
-        return this.path + avatarType + this.underBar + bgName + this.extension;
+    public String createImageFilePath(String avatarType, String bgName) {
+        return this.imagePath + avatarType + this.underBar + bgName + this.imageExtension;
     }
 }
