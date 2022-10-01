@@ -1,23 +1,24 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.dto.request.AudioRequest;
-import com.fastcampus.finalproject.dto.request.TextInputRequest;
+import com.fastcampus.finalproject.dto.request.*;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarDivisionDto;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
+import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarList;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Array;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -44,10 +45,130 @@ public class ProjectService {
     private final DummyAvatarDivisionRepository dummyAvatarDivisionRepository;
     private final DummyBackgroundRepository dummyBackgroundRepository;
     private final AudioService audioService;
+    private final VideoService videoService;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 7;
 
+    @Value("${file.dir}")
+    private String fileDir;
+
+    /**
+     * 아바타 페이지에서 아바타 정보로 영상 생성
+     * */
+    @Transactional
+    public AvatarInfoResponse addAvatarInfo(Long projectId, AvatarInfoRequest request, Long userUid) throws JsonProcessingException {
+        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+
+        String splitTotalAudioUrl = request.splitTotalAudioUrl(findProject.getTotalAudioUrl());
+
+        // 아바타타입에 1-1-1_배경0 이렇게 배경값 추가하기
+        VideoResponse videoResponse = videoService.getVideo(new VideoRequest(splitTotalAudioUrl, request.getAvatarType(), request.getBgName(), "result"));
+
+        // 영상 이름으로 특정 경로(로컬)에서 찾아온 후 -> 해당 영상 파일 정보를 DB에 저장
+        String videoResponseName = videoResponse.getId() + ".mp4"; // 파일 이름
+        log.info("videoResponseName : {}", videoResponseName);
+        String videoUrl = fileDir + videoResponseName; // 파일 url
+
+        // 영상 저장된 경로에서 해당 영상 찾아오기
+        // 영상 이름, 영상 url(로컬주소), userid, 생성일, 수정일 DB에 저장
+        UserBasic user = userRepository.findById(userUid).get();
+        Video saveVideo = videoRepository.save(new Video(findProject.getName(), videoUrl, user));
+
+        // DB 에서 정보 빼내서 프론트에 response 내려주기 -> 상태, videoId, videoNAme, video url, 생성일
+        AvatarInfoResponse avatarInfoResponse = new AvatarInfoResponse(videoResponse.getStatus(), saveVideo.getId(), saveVideo.getName(), saveVideo.getVideoUrl(), saveVideo.getCreatedAt());
+        findProject.getAvatar().changeAvatarInfo(request);
+
+        return avatarInfoResponse;
+    }
+
+
+    /**
+     * 프로젝트 이름 변경
+     * */
+    @Transactional
+    public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest projectName) {
+        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        findProject.changeProjectName(projectName.getProjectName());
+        return new UpdateProjectNameResponse(projectName.getProjectName());
+    }
+
+    /**
+     * 음성 파일 업로드
+     * */
+    @Transactional
+    public Void addAudioFile(Long projectId, AudioFileUploadRequest audioFile) throws IOException {
+        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+
+        String audioFileBase64 = audioFile.getAudioFile();
+        if (audioFileBase64.isEmpty()) { return null; }
+
+        String audioFileName = audioFile.getAudioFileName();// 순수 파일 이름 추출 (123456)
+        String uuid = UUID.randomUUID().toString(); // 저장할 파일 이름에 덧붙일 uuid 생성
+        saveUploadAudioFile(audioFileBase64, audioFileName, uuid); // 특정 경로에 파일 저장(현재 local -> 추후에 S3)
+
+        String saveName = uuid + "_" + audioFileName; // 저장할 파일 이름 (uuid_haha.wav)
+        findProject.changeAudioFileName(saveName); // DB에 파일 이름 저장
+        return null;
+    }
+
+    private void saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
+        byte decode[] = java.util.Base64.getDecoder().decode(String.valueOf(audioFileBase64));//.decodeBase64(String.valueOf(audioFileBase64));
+        FileOutputStream fos;
+        try {
+            File target = new File(fileDir + uuid + "_" + audioFileName);
+            target.createNewFile();
+            fos = new FileOutputStream(target);
+            fos.write(decode);
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 텍스트 페이지에서 문장별 Audio File 생성
+     * */
+    @Transactional
+    public SentenceInputResponse getAudioFile(SentenceInputRequest sentenceInputRequest) throws Exception {
+        // 음성 합성
+        AudioResponse audioResponse = audioService.getAudio(new AudioRequest(sentenceInputRequest.getTexts(), "", "result"));
+
+        String audioName = audioResponse.getId(); // 음성 파일 이름
+        byte[] audioBinaryFile = getFileBinary(fileDir + audioName + ".wav");
+        String audioBase64toString = java.util.Base64.getEncoder().encodeToString(audioBinaryFile);
+
+        SentenceInputResponse sentenceInputResponse = new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
+        return sentenceInputResponse;
+    }
+
+    private static byte[] getFileBinary(String filepath) {
+        File file = new File(filepath);
+        byte[] data = new byte[(int) file.length()];
+        try (FileInputStream stream = new FileInputStream(file)) {
+            stream.read(data, 0, data.length);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
+    /**
+     * 텍스트 페이지에서 Audio 정보 추가
+     * */
+    @Transactional
+    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest totalAudioInfo) throws Exception {
+        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+
+        AudioResponse audioResponse = audioService.getAudio(new AudioRequest(totalAudioInfo.getTexts(), "", "result"));
+        TotalAudioSyntheticResponse taSyntheticResponse = new TotalAudioSyntheticResponse(audioResponse.getStatus(), "https://../" + audioResponse.getId() + ".wav");
+
+        findProject.getAudio().changeAudioInfo(totalAudioInfo);
+        findProject.changeTotalAudioURl("https://../" + audioResponse.getId() + ".wav");
+
+        return taSyntheticResponse;
+    }
 
     /**
      * 처음 텍스트 팝업창으로 저장
