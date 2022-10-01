@@ -1,13 +1,12 @@
 package com.fastcampus.finalproject.entity;
 
-import com.fastcampus.finalproject.enums.ProjectDefaultType;
+import com.fastcampus.finalproject.dto.request.TotalAudioSyntheticRequest;
 import lombok.Getter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Lob;
+
 
 import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 
@@ -16,6 +15,7 @@ import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 public class Audio {
 
     private static final Integer DEFAULT_CONTROL = 0;
+    private static final String DEFAULT_SENTENCE_SPACING_LIST = "0";
 
     @Column(name = "LANG", nullable = false)
     private String language;
@@ -39,6 +39,9 @@ public class Audio {
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String texts;
 
+    @Column(nullable = false)
+    private String sentenceSpacingList;
+
     public Audio() {
         this.language = LANGUAGE.getValue();
         this.sex = SEX.getValue();
@@ -47,5 +50,17 @@ public class Audio {
         this.pitch = DEFAULT_CONTROL;
         this.sentenceSpacing = DEFAULT_CONTROL;
         this.texts = EMPTY.getValue();
+        this.sentenceSpacingList = DEFAULT_SENTENCE_SPACING_LIST;
+    }
+
+    public void changeAudioInfo(TotalAudioSyntheticRequest totalAudioInfo) {
+        this.language = totalAudioInfo.getLanguage();
+        this.sex = totalAudioInfo.getSex();
+        this.characterVoice = totalAudioInfo.getCharacterName();
+        this.speed = totalAudioInfo.getSpeed();
+        this.pitch = totalAudioInfo.getPitch();
+        this.sentenceSpacing = totalAudioInfo.getSentenceSpacing();
+        this.texts = totalAudioInfo.getTexts();
+        this.sentenceSpacingList = totalAudioInfo.SplitTextListToEntity();
     }
 }
