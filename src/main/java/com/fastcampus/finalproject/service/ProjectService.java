@@ -175,55 +175,16 @@ public class ProjectService {
      * */
     @Transactional
     public TextInputResponse getAudio(Long projectId, TextInputRequest texts) throws Exception{
-        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new RuntimeException("프로젝트가 존재하지 않습니다."));
+        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
 
-        AudioResponse audioResponse = new AudioResponse();
-        audioResponse = audioService.getAudio(new AudioRequest(texts.getTexts(), "", "result"));
-
-        TextInputResponse textInputResponse = new TextInputResponse();
-        textInputResponse.setResult(audioResponse.getStatus());
-        textInputResponse.setTotalAudioUrl(audioResponse.getId());
-        findProject.changeTotalAudioURl(audioResponse.getId());
-        return textInputResponse;
-
-/*
-        // Java -> Python 으로  HTTP 요청
-//        AudioRequest audioRequest = new AudioRequest();
-//        log.info("texts.getTexts() : {}", texts.getTexts());
-//        audioRequest.setText(texts.getTexts());
-//        audioRequest.setPath("result");
-//        audioRequest.setNarration("");
-
-
-        // audioRequest 에 texts 를 get 해서 split -> 각 split text 마다 python api 로 요청
-        //String[] splitTexts = audioRequest.getText().split("\\.");
-        List<String> splitTextList = Arrays.asList(texts.getTexts().split("\\."));
-        log.info("splitTextList : {}", splitTextList);
-
-        List<String> audioIdList = new ArrayList<>();
-
-        AudioResponse audioResponse = new AudioResponse();
-        for (String s : splitTextList) {
-            log.info("splitTextList s : {}", s);
-            audioResponse = audioService.getAudio(new AudioRequest(s, "", "result"));
-            audioIdList.add(audioResponse.getId()); // 오디오 이름
-            log.info("audioResponse.getId() : {}", audioResponse.getId());
-        }
-        log.info("audioIdList : {}", audioIdList.toArray()); // 오디오 이름
-
+        AudioResponse audioResponse = audioService.getAudio(new AudioRequest(texts.getTexts(), "", "result"));
 
         TextInputResponse textInputResponse = new TextInputResponse();
         textInputResponse.setResult(audioResponse.getStatus());
 
-        ArrayList<TextInputResponse.Audios> resAudioList = new ArrayList<>();
-        for (int i = 0; i < audioIdList.size(); i++) {
-            resAudioList.add(new TextInputResponse.Audios(Integer.parseInt(audioIdList.get(i)), splitTextList.toString(), audioIdList.toString()));
-        }
-        textInputResponse.setAudios(resAudioList);
-
+        textInputResponse.setTotalAudioUrl("https://../" + audioResponse.getId() + ".wav");
+        findProject.changeTotalAudioURl("https://../" + audioResponse.getId() + ".wav");
         return textInputResponse;
-
- */
     }
 
     @Transactional(readOnly = true)
