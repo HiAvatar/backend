@@ -1,6 +1,5 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.repository.ProjectRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,28 +20,33 @@ public class FlaskCommunicationService {
 
     private final ObjectMapper objectMapper;
 
-    public AudioResponse getAudioResult(AudioRequest request) throws JsonProcessingException {
+    public AudioResponse getAudioResult(AudioRequest request) {
         //헤더 설정
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
-        //Object Mapper로 JSON 바인딩
-        String params = objectMapper.writeValueAsString(request);
 
-        //HttpEntity에 헤더 및 params 설정
-        HttpEntity<String> entity = new HttpEntity<>(params, httpHeaders);
+        try {
+            //Object Mapper로 JSON 바인딩
+            String params = objectMapper.writeValueAsString(request);
 
-        //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> responseEntity = restTemplate.exchange(
-                "http://localhost:8000/request_audio",
-                HttpMethod.POST,
-                entity,
-                String.class);
+            //HttpEntity에 헤더 및 params 설정
+            HttpEntity<String> entity = new HttpEntity<>(params, httpHeaders);
 
-        log.info("audio responseCode: {}", responseEntity.getStatusCode());
-        log.info("audio responseBody: {}", responseEntity.getBody());
+            //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    "http://localhost:8000/request_audio",
+                    HttpMethod.POST,
+                    entity,
+                    String.class);
 
-        return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
+            log.info("audio responseCode: {}", responseEntity.getStatusCode());
+            log.info("audio responseBody: {}", responseEntity.getBody());
+
+            return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
