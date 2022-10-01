@@ -23,21 +23,7 @@ public class AudioService {
         // 헤더 설정
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
-/*
-        // audioRequest 에 texts 를 get 해서 split -> 각 split text 마다 /test api 로 요청
-        //List<String> list = new ArrayList<>();
-        String[] splitTexts = audioRequest.getText().split("\\.");
 
-        // postService에서 Split해서 옮기기
-        for (String s : splitTexts) {
-            audioRequest.setText(s);
-            //audioRequest.setText("안녕하세요. 반갑습니다.");
-            audioRequest.setNarration("");
-            audioRequest.setPath("result");
-
-        }
-
-*/
         // Object to String
         ObjectMapper objectMapper = new ObjectMapper();
         String audioRequestParam = objectMapper.writeValueAsString(audioRequest);
