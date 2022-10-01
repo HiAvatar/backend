@@ -16,8 +16,8 @@ public class Video extends BaseTimeEntity {
     @Column(name = "VIDEO_NAME", nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String thumbnail;
+//    @Column(nullable = false)
+//    private String thumbnail;
 
     @Column(nullable = false)
     private String videoUrl;
