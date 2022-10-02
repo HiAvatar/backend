@@ -1,7 +1,7 @@
 package com.fastcampus.finalproject.controller;
 
 import com.fastcampus.finalproject.config.security.AuthUtil;
-import com.fastcampus.finalproject.dto.AvatarDto.*;
+import com.fastcampus.finalproject.dto.AvatarPageDto.*;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
 import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
@@ -37,7 +37,7 @@ public class ProjectController {
     }
 
     @GetMapping("/projects/{projectId}/avatar")
-    public ResponseWrapper<AvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
+    public ResponseWrapper<GetAvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
         return new ResponseWrapper<>(projectService.getAvatarPageData(AuthUtil.getCurrentUserUid(), projectId))
                 .ok();
     }
