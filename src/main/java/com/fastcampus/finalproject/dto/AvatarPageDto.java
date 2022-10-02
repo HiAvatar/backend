@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-public class AvatarDto {
+public class AvatarPageDto {
 
     @Data
     public static class AvatarPageRequest {

@@ -10,6 +10,7 @@ import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
 import com.fastcampus.finalproject.dto.response.InsertTextPageResponse;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
+import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarList;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
@@ -31,8 +32,8 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.fastcampus.finalproject.dto.AvatarDto.*;
-import static com.fastcampus.finalproject.dto.AvatarDto.GetAvatarPageResponse.*;
+import static com.fastcampus.finalproject.dto.AvatarPageDto.*;
+import static com.fastcampus.finalproject.dto.AvatarPageDto.GetAvatarPageResponse.*;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
