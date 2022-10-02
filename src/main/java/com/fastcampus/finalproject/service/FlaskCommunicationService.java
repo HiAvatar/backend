@@ -11,7 +11,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.fastcampus.finalproject.dto.AudioDto.*;
+import static com.fastcampus.finalproject.dto.AudioDto.AudioRequest;
+import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoRequest;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -23,11 +26,27 @@ public class FlaskCommunicationService {
 
     public AudioResponse getAudioResult(AudioRequest request) {
         try {
-            HttpEntity<String> entity = getHttpEntity(request, getHttpHeaders());
+            String params = objectMapper.writeValueAsString(request);
+
+            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
             ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestAudioApi());
             writeLogAboutResponse(responseEntity);
 
             return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private VideoResponse getVideoResult(VideoRequest request) {
+        try {
+            String params = objectMapper.writeValueAsString(request);
+
+            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
+            ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestVideoApi());
+            writeLogAboutResponse(responseEntity);
+
+            return objectMapper.readValue(responseEntity.getBody(), VideoResponse.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -40,10 +59,7 @@ public class FlaskCommunicationService {
         return httpHeaders;
     }
 
-    private HttpEntity<String> getHttpEntity(AudioRequest request, HttpHeaders httpHeaders) throws JsonProcessingException {
-        //Object Mapper로 JSON 바인딩
-        String params = objectMapper.writeValueAsString(request);
-
+    private HttpEntity<String> getHttpEntity(String params, HttpHeaders httpHeaders) throws JsonProcessingException {
         //HttpEntity에 헤더 및 params 설정
         return new HttpEntity<>(params, httpHeaders);
     }
