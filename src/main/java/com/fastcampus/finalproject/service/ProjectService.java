@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.fastcampus.finalproject.dto.AvatarDto.*;
-import static com.fastcampus.finalproject.dto.AvatarDto.AvatarPageResponse.*;
+import static com.fastcampus.finalproject.dto.AvatarDto.GetAvatarPageResponse.*;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -124,7 +124,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public AvatarPageResponse getAvatarPageData(Long userId, Long projectId) {
+    public GetAvatarPageResponse getAvatarPageData(Long userId, Long projectId) {
         Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
                 .orElseThrow(NoSuchElementException::new);
 
@@ -135,7 +135,7 @@ public class ProjectService {
 
         AvatarPageDummyDto dummyData = new AvatarPageDummyDto(avatarDtoList, backgroundDtoList);
 
-        return new AvatarPageResponse(findProject, dummyData);
+        return new GetAvatarPageResponse(findProject, dummyData);
     }
 
     private List<AvatarSelectionDto> getAvatarDtoList() {
