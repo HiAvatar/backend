@@ -88,14 +88,13 @@ public class ProjectService {
         Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
                 .orElseThrow(NoSuchElementException::new);
 
-        //Test Data
-        String temp = "하. 하이. 하하이. 하하하이. 하하하하이. 하하하하하이. 하하하하하하이. 하이 하이";
-        List<Integer> sentenceSpacingList = Stream.of("0","1","2","3","2","3","-2","-1").map(Integer::parseInt).collect(Collectors.toList());
+        List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
+                .map(String::trim)
+                .collect(Collectors.toList());
 
-        //List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
-        //List<String> sentenceSpacingList = Stream.of(findProject.getAudio().getSentenceSpacingList().split("\\|")).collect(Collectors.toList());
-
-        List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
+        List<Integer> sentenceSpacingList = Stream.of(findProject.getAudio().getSentenceSpacingList().split("\\|"))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
 
         List<TextDto> splitTextList = new ArrayList<>();
         for (int i = 0; i < textList.size(); i++) {
