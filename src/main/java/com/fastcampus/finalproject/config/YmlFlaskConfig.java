@@ -25,4 +25,8 @@ public class YmlFlaskConfig {
     public String createImageFilePath(String avatarType, String bgName) {
         return this.imagePath + avatarType + this.underBar + bgName + this.imageExtension;
     }
+
+    public String createAudioFilePath(String fileName) {
+        return this.filePath + fileName + this.audioExtension;
+    }
 }

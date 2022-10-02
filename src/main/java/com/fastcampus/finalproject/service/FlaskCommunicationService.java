@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.service;
 
+import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
 public class FlaskCommunicationService {
 
     private final ObjectMapper objectMapper;
+    private final YmlFlaskConfig flaskConfig;
 
     public AudioResponse getAudioResult(AudioRequest request) {
         //헤더 설정
@@ -35,7 +37,7 @@ public class FlaskCommunicationService {
             //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> responseEntity = restTemplate.exchange(
-                    "http://localhost:8000/request_audio",
+                    flaskConfig.getRequestAudioApi(),
                     HttpMethod.POST,
                     entity,
                     String.class);
