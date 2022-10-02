@@ -52,4 +52,8 @@ public class Audio {
         this.sentenceSpacingList = EMPTY.getValue();
         this.texts = EMPTY.getValue();
     }
+
+    public void changeTexts(String texts) {
+        this.texts = texts;
+    }
 }
