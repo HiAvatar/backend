@@ -3,9 +3,11 @@ package com.fastcampus.finalproject.service;
 import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fastcampus.finalproject.dto.AudioDto;
-import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
 import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
-import com.fastcampus.finalproject.dto.response.*;
+import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
+import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
+import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
+import com.fastcampus.finalproject.dto.response.InsertTextPageResponse;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
@@ -29,7 +31,8 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.*;
+import static com.fastcampus.finalproject.dto.AvatarDto.*;
+import static com.fastcampus.finalproject.dto.AvatarDto.AvatarPageResponse.*;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -121,28 +124,28 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public GetAvatarPageResponse getAvatarPageData(Long userId, Long projectId) {
+    public AvatarPageResponse getAvatarPageData(Long userId, Long projectId) {
         Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
                 .orElseThrow(NoSuchElementException::new);
 
-        List<AvatarDto> avatarDtoList = getAvatarDtoList();
+        List<AvatarSelectionDto> avatarDtoList = getAvatarDtoList();
         List<BackgroundDto> backgroundDtoList = dummyBackgroundRepository.findAll().stream()
                 .map(BackgroundDto::new)
                 .collect(Collectors.toList());
 
         AvatarPageDummyDto dummyData = new AvatarPageDummyDto(avatarDtoList, backgroundDtoList);
 
-        return new GetAvatarPageResponse(findProject, dummyData);
+        return new AvatarPageResponse(findProject, dummyData);
     }
 
-    private List<AvatarDto> getAvatarDtoList() {
-        List<AvatarDto> avatarDtoList = new ArrayList<>();
+    private List<AvatarSelectionDto> getAvatarDtoList() {
+        List<AvatarSelectionDto> avatarDtoList = new ArrayList<>();
 
         for (int i = START_AVATAR_IDX; i <= END_AVATAR_IDX; i++) {
             List<DummyAvatarDivision> avatarDivisions = dummyAvatarDivisionRepository.findAllByPositionStartingWith(Integer.toString(i));
             DummyAvatarList dummyAvatar = dummyAvatarListRepository.findByNameEndingWith(Integer.toString(i)).orElseThrow();
 
-            AvatarDto avatar = new AvatarDto(
+            AvatarSelectionDto avatar = new AvatarSelectionDto(
                     dummyAvatar.getThumbnail(),
                     getAvatarDivisions(avatarDivisions, i + "-1-"),
                     getAvatarDivisions(avatarDivisions, i + "-2-"),
@@ -159,12 +162,12 @@ public class ProjectService {
                 .map(AvatarDivisionDto::new).collect(Collectors.toList());
     }
 
-    public GetAvatarPreviewResponse getAvatarPreview(GetAvatarPreviewRequest request) {
+    public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
         String filepath = localFileConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
         byte[] fileBinary = getFileBinary(filepath);
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
-        return new GetAvatarPreviewResponse(base64String);
+        return new AvatarPreviewResponse(base64String);
     }
 
     private static byte[] getFileBinary(String filepath) {
