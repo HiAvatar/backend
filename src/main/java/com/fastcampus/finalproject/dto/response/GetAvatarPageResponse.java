@@ -41,9 +41,6 @@ public class GetAvatarPageResponse {
         private AvatarDto avatar2;
         private AvatarDto avatar3;
         private AvatarDto avatar4;
-        private AvatarDto avatar5;
-        private AvatarDto avatar6;
-        private AvatarDto avatar7;
         private List<BackgroundDto> backgroundList;
 
         public AvatarPageDummyDto(List<AvatarDto> avatarDtoList, List<BackgroundDto> backgroundDtoList) {
@@ -51,9 +48,6 @@ public class GetAvatarPageResponse {
             this.avatar2 = avatarDtoList.get(1);
             this.avatar3 = avatarDtoList.get(2);
             this.avatar4 = avatarDtoList.get(3);
-            this.avatar5 = avatarDtoList.get(4);
-            this.avatar6 = avatarDtoList.get(5);
-            this.avatar7 = avatarDtoList.get(6);
             this.backgroundList = backgroundDtoList;
         }
     }
