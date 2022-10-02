@@ -2,10 +2,13 @@ package com.fastcampus.finalproject.dto;
 
 
 import com.fastcampus.finalproject.entity.Project;
+import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyBackground;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AvatarDto {
@@ -19,7 +22,29 @@ public class AvatarDto {
     }
 
     @Data
-    public static class AvatarPageResponse {
+    public static class CompleteAvatarPageResponse {
+
+        private String result;
+        private Long videoId;
+        private String videoName;
+        private String videoUrl;
+        private String createdAt;
+
+        public CompleteAvatarPageResponse(String result, Video video) {
+            this.result = result;
+            this.videoId = video.getId();
+            this.videoName = video.getName();
+            this.videoUrl = video.getVideoUrl();
+            this.createdAt = customizedDateTime(video.getCreatedAt());
+        }
+
+        private String customizedDateTime(LocalDateTime dateTime) {
+            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+        }
+    }
+
+    @Data
+    public static class GetAvatarPageResponse {
 
         private String avatarName;
         private String avatarType;
@@ -32,7 +57,7 @@ public class AvatarDto {
         private Integer sentenceSpacing;
         private AvatarPageDummyDto dummyData;
 
-        public AvatarPageResponse(Project project, AvatarPageDummyDto dummyData) {
+        public GetAvatarPageResponse(Project project, AvatarPageDummyDto dummyData) {
             this.avatarName = project.getAvatar().getName();
             this.avatarType = project.getAvatar().getType();
             this.bgName = project.getAvatar().getBackground();
