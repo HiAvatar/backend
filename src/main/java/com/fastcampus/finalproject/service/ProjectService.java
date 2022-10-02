@@ -1,7 +1,10 @@
 package com.fastcampus.finalproject.service;
 
+import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
+import com.fastcampus.finalproject.dto.AudioDto;
 import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
+import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
@@ -45,10 +48,11 @@ public class ProjectService {
     private final DummyBackgroundRepository dummyBackgroundRepository;
     private final FlaskCommunicationService flaskCommunicationService;
 
+    private final S3Uploader s3Uploader;
     private final YmlFlaskConfig localFileConfig;
 
     private static final int START_AVATAR_IDX = 1;
-    private static final int END_AVATAR_IDX = 7;
+    private static final int END_AVATAR_IDX = 4;
 
     @Transactional(readOnly = true)
     public GetHistoryResponse getHistory(Long userUid) {
@@ -174,5 +178,31 @@ public class ProjectService {
             throw new RuntimeException(e);
         }
         return bytes;
+    }
+
+    public InsertTextPageResponse insertTextPageTemp(Long userUid, Long projectId, InsertTextPageRequest request) {
+        Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
+        findProject.getAudio().changeTexts(request.getTexts());
+
+        AudioDto.AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
+                new AudioDto.AudioRequest(findProject.getAudio().getTexts(), "none", "result")
+        );
+
+        if(audioResponse.getStatus().equals("Success")) {
+            //로컬 파일에서 뒤지기
+            File file = new File(localFileConfig.createAudioFilePath(audioResponse.getId()));
+
+            //s3 연동 -> url 받기
+            UserBasic user = userRepository.findById(userUid).get();
+            Project project = projectRepository.findById(projectId).get();
+            String savedFileBucketUrl = s3Uploader.uploadFile(
+                    file,
+                    user.getUserName() + "_" + userUid + "/" + project.getCreatedAt() + "_" + project.getId(),
+                    localFileConfig.getAudioExtension());
+
+            return new InsertTextPageResponse("Success", savedFileBucketUrl);
+        } else {
+            return new InsertTextPageResponse("Failed", null);
+        }
     }
 }

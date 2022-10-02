@@ -2,6 +2,7 @@ package com.fastcampus.finalproject.controller;
 
 import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
+import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
@@ -45,6 +46,12 @@ public class ProjectController {
     @PostMapping("/projects/avatar-preview")
     public ResponseWrapper<GetAvatarPreviewResponse> getAvatarPreview(@RequestBody GetAvatarPreviewRequest request) {
         return new ResponseWrapper<>(projectService.getAvatarPreview(request))
+                .ok();
+    }
+
+    @PostMapping("/projects/{projectId}/save")
+    public ResponseWrapper<InsertTextPageResponse> insertTextPageTemp(@PathVariable Long projectId, @RequestBody InsertTextPageRequest request) {
+        return new ResponseWrapper<>(projectService.insertTextPageTemp(AuthUtil.getCurrentUserUid(), projectId, request))
                 .ok();
     }
 }
