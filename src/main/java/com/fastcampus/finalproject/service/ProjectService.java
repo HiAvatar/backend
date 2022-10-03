@@ -3,6 +3,7 @@ package com.fastcampus.finalproject.service;
 import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fastcampus.finalproject.dto.AudioDto;
+import com.fastcampus.finalproject.dto.VideoDto;
 import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
@@ -32,8 +33,10 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.fastcampus.finalproject.dto.AudioDto.*;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.*;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.GetAvatarPageResponse.*;
+import static com.fastcampus.finalproject.dto.VideoDto.*;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -163,6 +166,7 @@ public class ProjectService {
                 .map(AvatarDivisionDto::new).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
         String filepath = localFileConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
         byte[] fileBinary = getFileBinary(filepath);
@@ -183,12 +187,13 @@ public class ProjectService {
         return bytes;
     }
 
+    @Transactional
     public InsertTextPageResponse insertTextPageTemp(Long userUid, Long projectId, InsertTextPageRequest request) {
         Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
         findProject.getAudio().changeTexts(request.getTexts());
 
-        AudioDto.AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioDto.AudioRequest(findProject.getAudio().getTexts(), "none", "result")
+        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
+                new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
         );
 
         if(audioResponse.getStatus().equals("Success")) {
@@ -203,9 +208,43 @@ public class ProjectService {
                     user.getUserName() + "_" + userUid + "/" + project.getCreatedAt() + "_" + project.getId(),
                     localFileConfig.getAudioExtension());
 
+            project.changeTotalAudioUrl(savedFileBucketUrl);
+            project.changeAudioFileName(audioResponse.getId());
             return new InsertTextPageResponse("Success", savedFileBucketUrl);
         } else {
             return new InsertTextPageResponse("Failed", null);
+        }
+    }
+
+    @Transactional
+    public CompleteAvatarPageResponse insertAvatarPageTemp(Long userUid, Long projectId, AvatarPageRequest request) {
+        //ManyToOne으로 User, Project 정보를 끌어온다. -> 1번의 쿼리만으로 조회
+        //현재 코드에서는 총 3번의 쿼리
+        Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
+        findProject.getAvatar().changeAvatarSelection(request.getAvatarName(), request.getAvatarType(), request.getBgName());
+
+        //영상 합성
+        VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
+                new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
+        );
+
+        if(videoResponse.getStatus().equals("Success")) {
+            //로컬 파일에서 뒤지기
+            File file = new File(localFileConfig.createVideoFilePath(videoResponse.getId()));
+
+            //s3 연동 -> url 받기
+            UserBasic user = userRepository.findById(userUid).get();
+            Project project = projectRepository.findById(projectId).get();
+            String savedFileBucketUrl = s3Uploader.uploadFile(
+                    file,
+                    user.getUserName() + "_" + userUid + "/" + project.getCreatedAt() + "_" + project.getId(),
+                    localFileConfig.getVideoExtension());
+
+            Video savedVideo = videoRepository.save(new Video(project.getName(), savedFileBucketUrl, user));
+
+            return new CompleteAvatarPageResponse("Success", savedVideo);
+        } else {
+            return new CompleteAvatarPageResponse("Failed");
         }
     }
 }
