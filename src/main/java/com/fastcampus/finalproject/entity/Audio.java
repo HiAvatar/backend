@@ -15,7 +15,7 @@ import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 public class Audio {
 
     private static final Integer DEFAULT_CONTROL = 0;
-    private static final String DEFAULT_SENTENCE_SPACING_LIST = "0";
+    //private static final String DEFAULT_SENTENCE_SPACING_LIST = "0";
 
     @Column(name = "LANG", nullable = false)
     private String language;
@@ -35,12 +35,12 @@ public class Audio {
     @Column(columnDefinition = "TINYINT", nullable = false)
     private Integer sentenceSpacing;
 
+    @Column(nullable = false)
+    private String sentenceSpacingList;
+
     @Lob
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String texts;
-
-    @Column(nullable = false)
-    private String sentenceSpacingList;
 
     public Audio() {
         this.language = LANGUAGE.getValue();
@@ -49,8 +49,9 @@ public class Audio {
         this.speed = DEFAULT_CONTROL;
         this.pitch = DEFAULT_CONTROL;
         this.sentenceSpacing = DEFAULT_CONTROL;
+        this.sentenceSpacingList = EMPTY.getValue();
         this.texts = EMPTY.getValue();
-        this.sentenceSpacingList = DEFAULT_SENTENCE_SPACING_LIST;
+        //this.sentenceSpacingList = DEFAULT_SENTENCE_SPACING_LIST;
     }
 
     public void changeAudioInfo(TotalAudioSyntheticRequest totalAudioInfo) {

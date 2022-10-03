@@ -1,10 +1,17 @@
 package com.fastcampus.finalproject.controller;
 
+import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
 import com.fastcampus.finalproject.dto.request.*;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.repository.UserRepository;
+import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
+import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse;
+import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
+import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
+import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
+import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.service.ProjectService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +38,7 @@ public class ProjectController {
     public ResponseWrapper<AvatarInfoResponse> addAvatarInfo(
             @PathVariable Long projectId,
             @RequestBody AvatarInfoRequest avatarInfoRequest) throws JsonProcessingException {
-        return new ResponseWrapper<>(projectService.addAvatarInfo(projectId, avatarInfoRequest, userUid)).ok();
+        return new ResponseWrapper<>(projectService.addAvatarInfo(projectId, avatarInfoRequest, AuthUtil.getCurrentUserUid())).ok();
     }
 
     /**
@@ -40,7 +48,7 @@ public class ProjectController {
     public ResponseWrapper<UpdateProjectNameResponse> changeProjectName(
             @PathVariable Long projectId,
             @RequestBody UpdateProjectNameRequest projectName) {
-        return new ResponseWrapper<>(projectService.changeProjectName(projectId, projectName)).ok();
+        return new ResponseWrapper<>(projectService.changeProjectName(projectId, projectName, AuthUtil.getCurrentUserUid())).ok();
     }
 
     /**
@@ -50,7 +58,7 @@ public class ProjectController {
     public ResponseWrapper<Void> addAudioFile(
             @PathVariable("projectId") Long projectId,
             @RequestBody AudioFileUploadRequest audioFile) throws IOException {
-        projectService.addAudioFile(projectId, audioFile);
+        projectService.addAudioFile(projectId, audioFile, AuthUtil.getCurrentUserUid());
         return new ResponseWrapper<Void>().ok();
     }
 
@@ -70,7 +78,7 @@ public class ProjectController {
     public ResponseWrapper<TotalAudioSyntheticResponse> addTextPageAudioInfo(
             @PathVariable("projectId") Long projectId,
             @RequestBody TotalAudioSyntheticRequest totalAudioInfo) throws Exception {
-        return new ResponseWrapper<>(projectService.addAudioInfo(projectId, totalAudioInfo)).ok();
+        return new ResponseWrapper<>(projectService.addAudioInfo(projectId, totalAudioInfo, AuthUtil.getCurrentUserUid())).ok();
     }
 
     /**
@@ -81,39 +89,38 @@ public class ProjectController {
             @PathVariable("projectId") Long projectId,
             @RequestBody TextInputRequest texts) throws Exception {
         log.info("texts : {}", texts.getTexts());
-        TextInputResponse textInputResponse = projectService.getAudio(projectId, texts);
+        TextInputResponse textInputResponse = projectService.getAudio(projectId, texts, AuthUtil.getCurrentUserUid());
         return new ResponseWrapper<>(textInputResponse).ok();
     }
 
-    //init data
-    @GetMapping("/login-test")
-    public ResponseWrapper<Void> login() {
-        userRepository.save(new UserBasic("userA"));
-        return new ResponseWrapper<Void>()
-                .ok();
-    }
 
     @GetMapping("/projects")
     public ResponseWrapper<GetHistoryResponse> getHistory() {
-        return new ResponseWrapper<>(projectService.getHistory(userUid))
+        return new ResponseWrapper<>(projectService.getHistory(AuthUtil.getCurrentUserUid()))
                 .ok();
     }
 
     @PostMapping("/projects")
     public ResponseWrapper<CreateProjectResponse> createProject() {
-        return new ResponseWrapper<>(projectService.create(userUid))
+        return new ResponseWrapper<>(projectService.create(AuthUtil.getCurrentUserUid()))
                 .ok();
     }
 
     @GetMapping("/projects/{projectId}/save")
     public ResponseWrapper<GetTextPageResponse> getTextPage(@PathVariable Long projectId) {
-        return new ResponseWrapper<>(projectService.getTextPageData(1L, projectId))
+        return new ResponseWrapper<>(projectService.getTextPageData(AuthUtil.getCurrentUserUid(), projectId))
                 .ok();
     }
 
     @GetMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<GetAvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
-        return new ResponseWrapper<>(projectService.getAvatarPageData(1L, projectId)).ok();
+        return new ResponseWrapper<>(projectService.getAvatarPageData(AuthUtil.getCurrentUserUid(), projectId))
+                .ok();
     }
 
+    @PostMapping("/projects/avatar-preview")
+    public ResponseWrapper<GetAvatarPreviewResponse> getAvatarPreview(@RequestBody GetAvatarPreviewRequest request) {
+        return new ResponseWrapper<>(projectService.getAvatarPreview(request))
+                .ok();
+    }
 }

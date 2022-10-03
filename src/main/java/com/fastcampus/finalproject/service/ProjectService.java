@@ -1,8 +1,11 @@
 package com.fastcampus.finalproject.service;
 
+import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.dto.request.*;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarDivisionDto;
+import com.fastcampus.finalproject.config.YmlLocalFileConfig;
+import com.fastcampus.finalproject.dto.request.GetAvatarPreviewRequest;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.Video;
@@ -14,6 +17,7 @@ import com.fastcampus.finalproject.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +26,17 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.*;
-import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarDto;
-import static com.fastcampus.finalproject.dto.response.GetAvatarPageResponse.AvatarPageDummyDto;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -46,6 +56,9 @@ public class ProjectService {
     private final DummyBackgroundRepository dummyBackgroundRepository;
     private final AudioService audioService;
     private final VideoService videoService;
+    private final FlaskCommunicationService flaskCommunicationService;
+
+    private final YmlLocalFileConfig localFileConfig;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 7;
@@ -87,8 +100,8 @@ public class ProjectService {
      * 프로젝트 이름 변경
      * */
     @Transactional
-    public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest projectName) {
-        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+    public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest projectName, Long currentUserUid) {
+        Project findProject = projectRepository.findByUserUidAndId(AuthUtil.getCurrentUserUid(), projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
         findProject.changeProjectName(projectName.getProjectName());
         return new UpdateProjectNameResponse(projectName.getProjectName());
     }
@@ -97,8 +110,8 @@ public class ProjectService {
      * 음성 파일 업로드
      * */
     @Transactional
-    public Void addAudioFile(Long projectId, AudioFileUploadRequest audioFile) throws IOException {
-        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+    public Void addAudioFile(Long projectId, AudioFileUploadRequest audioFile, Long currentUserUid) throws IOException {
+        Project findProject = projectRepository.findByUserUidAndId(currentUserUid, projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
 
         String audioFileBase64 = audioFile.getAudioFile();
         if (audioFileBase64.isEmpty()) { return null; }
@@ -136,14 +149,14 @@ public class ProjectService {
         AudioResponse audioResponse = audioService.getAudio(new AudioRequest(sentenceInputRequest.getTexts(), "", "result"));
 
         String audioName = audioResponse.getId(); // 음성 파일 이름
-        byte[] audioBinaryFile = getFileBinary(fileDir + audioName + ".wav");
+        byte[] audioBinaryFile = getAudioFileBinary(fileDir + audioName + ".wav");
         String audioBase64toString = java.util.Base64.getEncoder().encodeToString(audioBinaryFile);
 
         SentenceInputResponse sentenceInputResponse = new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
         return sentenceInputResponse;
     }
 
-    private static byte[] getFileBinary(String filepath) {
+    private static byte[] getAudioFileBinary(String filepath) {
         File file = new File(filepath);
         byte[] data = new byte[(int) file.length()];
         try (FileInputStream stream = new FileInputStream(file)) {
@@ -158,8 +171,8 @@ public class ProjectService {
      * 텍스트 페이지에서 Audio 정보 추가
      * */
     @Transactional
-    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest totalAudioInfo) throws Exception {
-        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest totalAudioInfo, Long currentUserUid) throws Exception {
+        Project findProject = projectRepository.findByUserUidAndId(currentUserUid, projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
 
         AudioResponse audioResponse = audioService.getAudio(new AudioRequest(totalAudioInfo.getTexts(), "", "result"));
         TotalAudioSyntheticResponse taSyntheticResponse = new TotalAudioSyntheticResponse(audioResponse.getStatus(), "https://../" + audioResponse.getId() + ".wav");
@@ -174,8 +187,8 @@ public class ProjectService {
      * 처음 텍스트 팝업창으로 저장
      * */
     @Transactional
-    public TextInputResponse getAudio(Long projectId, TextInputRequest texts) throws Exception{
-        Project findProject = projectRepository.findById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+    public TextInputResponse getAudio(Long projectId, TextInputRequest texts, Long currentUserUid) throws Exception{
+        Project findProject = projectRepository.findByUserUidAndId(currentUserUid, projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
 
         AudioResponse audioResponse = audioService.getAudio(new AudioRequest(texts.getTexts(), "", "result"));
 
@@ -218,12 +231,22 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long userId, Long projectId) {
-
         Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
                 .orElseThrow(NoSuchElementException::new);
 
-        //TODO api 내 api 호출로 해야 splitTextList 구현 가능
-        List<TextDto> splitTextList = Collections.emptyList();
+        //Test Data
+        String temp = "하. 하이. 하하이. 하하하이. 하하하하이. 하하하하하이. 하하하하하하이. 하이 하이";
+        List<Integer> sentenceSpacingList = Stream.of("0","1","2","3","2","3","-2","-1").map(Integer::parseInt).collect(Collectors.toList());
+
+        //List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
+        //List<String> sentenceSpacingList = Stream.of(findProject.getAudio().getSentenceSpacingList().split("\\|")).collect(Collectors.toList());
+
+        List<String> textList = Stream.of(temp.split("\\.")).map(String::trim).collect(Collectors.toList());
+
+        List<TextDto> splitTextList = new ArrayList<>();
+        for (int i = 0; i < textList.size(); i++) {
+            splitTextList.add(new TextDto(i+1, textList.get(i), sentenceSpacingList.get(i)));
+        }
 
         List<DummyVoice> koreanList = dummyVoiceRepository.findAllByLanguage(KOREAN.getValue());
         List<DummyVoice> englishList = dummyVoiceRepository.findAllByLanguage(ENGLISH.getValue());
@@ -283,4 +306,23 @@ public class ProjectService {
                 .map(AvatarDivisionDto::new).collect(Collectors.toList());
     }
 
+    public GetAvatarPreviewResponse getAvatarPreview(GetAvatarPreviewRequest request) {
+        String filepath = localFileConfig.createFilePath(request.getAvatarType(), request.getBgName());
+        byte[] fileBinary = getFileBinary(filepath);
+        String base64String = Base64.getEncoder().encodeToString(fileBinary);
+
+        return new GetAvatarPreviewResponse(base64String);
+    }
+
+    private static byte[] getFileBinary(String filepath) {
+        File file = new File(filepath);
+        byte[] bytes = new byte[(int) file.length()];
+
+        try(FileInputStream stream = new FileInputStream(file)) {
+            stream.read(bytes, 0, bytes.length);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return bytes;
+    }
 }
