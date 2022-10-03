@@ -38,7 +38,7 @@ public class FlaskCommunicationService {
         }
     }
 
-    private VideoResponse getVideoResult(VideoRequest request) {
+    public VideoResponse getVideoResult(VideoRequest request) {
         try {
             String params = objectMapper.writeValueAsString(request);
 
