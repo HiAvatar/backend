@@ -90,7 +90,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long userId, Long projectId) {
-        Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
+        Project findProject = projectRepository.findById(projectId)
                 .orElseThrow(NoSuchElementException::new);
 
         List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
