@@ -197,19 +197,9 @@ public class ProjectService {
         );
 
         if(audioResponse.getStatus().equals("Success")) {
-            //로컬 파일에서 뒤지기
-            File file = new File(localFileConfig.createAudioFilePath(audioResponse.getId()));
+            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, localFileConfig.getAudioExtension()); //s3 연동 -> url 받기
 
-            //s3 연동 -> url 받기
-            UserBasic user = userRepository.findById(userUid).get();
-            Project project = projectRepository.findById(projectId).get();
-            String savedFileBucketUrl = s3Uploader.uploadFile(
-                    file,
-                    user.getUserName() + "_" + userUid + "/" + project.getCreatedAt() + "_" + project.getId(),
-                    localFileConfig.getAudioExtension());
-
-            project.changeTotalAudioUrl(savedFileBucketUrl);
-            project.changeAudioFileName(audioResponse.getId());
             return new InsertTextPageResponse("Success", savedFileBucketUrl);
         } else {
             return new InsertTextPageResponse("Failed", null);
@@ -218,8 +208,6 @@ public class ProjectService {
 
     @Transactional
     public CompleteAvatarPageResponse insertAvatarPageTemp(Long userUid, Long projectId, AvatarPageRequest request) {
-        //ManyToOne으로 User, Project 정보를 끌어온다. -> 1번의 쿼리만으로 조회
-        //현재 코드에서는 총 3번의 쿼리
         Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
         findProject.getAvatar().changeAvatarSelection(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
@@ -229,22 +217,25 @@ public class ProjectService {
         );
 
         if(videoResponse.getStatus().equals("Success")) {
-            //로컬 파일에서 뒤지기
             File file = new File(localFileConfig.createVideoFilePath(videoResponse.getId()));
-
-            //s3 연동 -> url 받기
-            UserBasic user = userRepository.findById(userUid).get();
-            Project project = projectRepository.findById(projectId).get();
-            String savedFileBucketUrl = s3Uploader.uploadFile(
-                    file,
-                    user.getUserName() + "_" + userUid + "/" + project.getCreatedAt() + "_" + project.getId(),
-                    localFileConfig.getVideoExtension());
-
-            Video savedVideo = videoRepository.save(new Video(project.getName(), savedFileBucketUrl, user));
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, localFileConfig.getVideoExtension());
+            Video savedVideo = videoRepository.save(new Video(findProject.getName(), savedFileBucketUrl, findProject.getUser()));
 
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
             return new CompleteAvatarPageResponse("Failed");
         }
+    }
+
+    private String getFilePath(String id) {
+        return localFileConfig.createAudioFilePath(id);
+    }
+
+    private String getSavedFileBucketUrl(File file, Project project, String fileExtension) {
+        return s3Uploader.uploadFile(
+                file,
+                project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreatedAt() + "_" + project.getId(),
+                fileExtension
+        );
     }
 }
