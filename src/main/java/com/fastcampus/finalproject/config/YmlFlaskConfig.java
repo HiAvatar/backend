@@ -29,4 +29,6 @@ public class YmlFlaskConfig {
     public String createAudioFilePath(String fileName) {
         return this.filePath + fileName + this.audioExtension;
     }
+
+    public String createVideoFilePath(String fileName) { return this.filePath + fileName + this.videoExtension; }
 }
