@@ -5,6 +5,7 @@ import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyBackground;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,19 +23,22 @@ public class AvatarPageDto {
     }
 
     @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class CompleteAvatarPageResponse {
 
         private String result;
         private Long videoId;
         private String videoName;
-        private String videoUrl;
         private String createdAt;
+
+        public CompleteAvatarPageResponse(String result) {
+            this.result = result;
+        }
 
         public CompleteAvatarPageResponse(String result, Video video) {
             this.result = result;
             this.videoId = video.getId();
             this.videoName = video.getName();
-            this.videoUrl = video.getVideoUrl();
             this.createdAt = customizedDateTime(video.getCreatedAt());
         }
 
