@@ -8,6 +8,8 @@ import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
 import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
 import com.fastcampus.finalproject.dto.response.*;
+import com.fastcampus.finalproject.entity.Project;
+import com.fastcampus.finalproject.repository.ProjectRepository;
 import com.fastcampus.finalproject.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -32,13 +34,13 @@ public class ProjectController {
 
     @GetMapping("/projects/{projectId}/save")
     public ResponseWrapper<GetTextPageResponse> getTextPage(@PathVariable Long projectId) {
-        return new ResponseWrapper<>(projectService.getTextPageData(AuthUtil.getCurrentUserUid(), projectId))
+        return new ResponseWrapper<>(projectService.getTextPageData(projectId))
                 .ok();
     }
 
     @GetMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<GetAvatarPageResponse> getAvatarSelectionPage(@PathVariable Long projectId) {
-        return new ResponseWrapper<>(projectService.getAvatarPageData(AuthUtil.getCurrentUserUid(), projectId))
+        return new ResponseWrapper<>(projectService.getAvatarPageData(projectId))
                 .ok();
     }
 
@@ -50,7 +52,13 @@ public class ProjectController {
 
     @PostMapping("/projects/{projectId}/save")
     public ResponseWrapper<InsertTextPageResponse> insertTextPageTemp(@PathVariable Long projectId, @RequestBody InsertTextPageRequest request) {
-        return new ResponseWrapper<>(projectService.insertTextPageTemp(AuthUtil.getCurrentUserUid(), projectId, request))
+        return new ResponseWrapper<>(projectService.insertTextPageTemp(projectId, request))
+                .ok();
+    }
+
+    @PostMapping("/projects/{projectId}/avatar")
+    public ResponseWrapper<CompleteAvatarPageResponse> insertAvatarPageTemp(@PathVariable Long projectId, @RequestBody AvatarPageRequest request) {
+        return new ResponseWrapper<>(projectService.insertAvatarPageTemp(projectId, request))
                 .ok();
     }
 }

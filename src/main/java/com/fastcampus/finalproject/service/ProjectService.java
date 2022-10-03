@@ -89,7 +89,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public GetTextPageResponse getTextPageData(Long userId, Long projectId) {
+    public GetTextPageResponse getTextPageData(Long projectId) {
         Project findProject = projectRepository.findById(projectId)
                 .orElseThrow(NoSuchElementException::new);
 
@@ -126,8 +126,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public GetAvatarPageResponse getAvatarPageData(Long userId, Long projectId) {
-        Project findProject = projectRepository.findByUserUidAndId(userId, projectId)
+    public GetAvatarPageResponse getAvatarPageData(Long projectId) {
+        Project findProject = projectRepository.findById(projectId)
                 .orElseThrow(NoSuchElementException::new);
 
         List<AvatarSelectionDto> avatarDtoList = getAvatarDtoList();
@@ -186,8 +186,8 @@ public class ProjectService {
     }
 
     @Transactional
-    public InsertTextPageResponse insertTextPageTemp(Long userUid, Long projectId, InsertTextPageRequest request) {
-        Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
+    public InsertTextPageResponse insertTextPageTemp(Long projectId, InsertTextPageRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).get();
         findProject.getAudio().changeTexts(request.getTexts());
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
@@ -205,8 +205,8 @@ public class ProjectService {
     }
 
     @Transactional
-    public CompleteAvatarPageResponse insertAvatarPageTemp(Long userUid, Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findByUserUidAndId(userUid, projectId).get();
+    public CompleteAvatarPageResponse insertAvatarPageTemp(Long projectId, AvatarPageRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).get();
         findProject.getAvatar().changeAvatarSelection(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
         //영상 합성
