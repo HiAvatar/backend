@@ -2,6 +2,7 @@ package com.fastcampus.finalproject.aws;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +28,14 @@ public class S3Uploader {
 //
 //    }
 
-    public String uploadFile(File uploadFile, String userPath, String extension) {
+    public String uploadFile(File uploadFile, String userPath) {
         String bucketPath = userPath + "/" + uploadFile.getName();
-        String uploadUrl = putS3(uploadFile, bucketPath);
-
-        if(extension.equals(flaskConfig.getVideoExtension())) {
-            //removeFile(new File(flaskConfig.getFilePath()));
-            removeLocalFile(uploadFile, "영상");
-        }
-        return uploadUrl;
+        return putS3(uploadFile, bucketPath);
     }
 
-    public void removeFile() {
-
+    public void removeFile(String projectPath, String fileName) {
+        amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, projectPath + "/" + fileName));
+        removeLocalFile(new File(flaskConfig.getFilePath() + "/" + fileName));
     }
 
     private String putS3(File uploadFile, String bucketPath) {
@@ -49,11 +45,11 @@ public class S3Uploader {
         return amazonS3Client.getUrl(bucket, bucketPath).toString();
     }
 
-    private void removeLocalFile(File targetFile, String fileType) {
+    public void removeLocalFile(File targetFile) {
         if(targetFile.delete()) {
-            log.info(fileType + " 파일이 삭제됨");
+            log.info(targetFile.getName() + " 파일이 삭제됨");
         } else {
-            log.info(fileType + " 파일이 삭제되지 않음");
+            log.info(targetFile.getName() + " 파일이 삭제되지 않음");
         }
     }
 }

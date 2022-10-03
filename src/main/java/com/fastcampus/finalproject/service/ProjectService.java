@@ -35,6 +35,7 @@ import static com.fastcampus.finalproject.dto.AudioDto.*;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.*;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.GetAvatarPageResponse.*;
 import static com.fastcampus.finalproject.dto.VideoDto.*;
+import static com.fastcampus.finalproject.dto.response.GetHistoryResponse.*;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -62,14 +63,14 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public GetHistoryResponse getHistory(Long userUid) {
 
-        List<GetHistoryResponse.ProjectDto> projects = projectRepository.findAllByUserUid(userUid)
+        List<ProjectDto> projects = projectRepository.findAllByUserUid(userUid)
                 .stream()
-                .map(GetHistoryResponse.ProjectDto::new)
+                .map(ProjectDto::new)
                 .collect(Collectors.toList());
 
-        List<GetHistoryResponse.VideoDto> videos = videoRepository.findAllByUserUid(userUid)
+        List<VideoDto> videos = videoRepository.findAllByUserUid(userUid)
                 .stream()
-                .map(GetHistoryResponse.VideoDto::new)
+                .map(VideoDto::new)
                 .collect(Collectors.toList());
 
         return new GetHistoryResponse(projects, videos);
@@ -196,8 +197,13 @@ public class ProjectService {
 
         if(audioResponse.getStatus().equals("Success")) {
             File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, flaskConfig.getAudioExtension()); //s3 연동 -> url 받기
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
 
+            //기존 파일 삭제시키기 (s3, local)
+            s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+
+            findProject.changeAudioFileName(audioResponse.getId());
+            findProject.changeTotalAudioUrl(savedFileBucketUrl);
             return new InsertTextPageResponse("Success", savedFileBucketUrl);
         } else {
             return new InsertTextPageResponse("Failed", null);
@@ -216,7 +222,11 @@ public class ProjectService {
 
         if(videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, flaskConfig.getVideoExtension());
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject);
+
+            //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
+            s3Uploader.removeLocalFile(file);
+
             Video savedVideo = videoRepository.save(new Video(findProject.getName(), savedFileBucketUrl, findProject.getUser()));
 
             return new CompleteAvatarPageResponse("Success", savedVideo);
@@ -229,11 +239,11 @@ public class ProjectService {
         return flaskConfig.createAudioFilePath(id);
     }
 
-    private String getSavedFileBucketUrl(File file, Project project, String fileExtension) {
-        return s3Uploader.uploadFile(
-                file,
-                project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreatedAt() + "_" + project.getId(),
-                fileExtension
-        );
+    private String getSavedFileBucketUrl(File file, Project project) {
+        return s3Uploader.uploadFile(file, getProjectPath(project));
+    }
+
+    private String getProjectPath(Project project) {
+        return project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreatedAt() + "_" + project.getId();
     }
 }
