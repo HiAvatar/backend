@@ -2,8 +2,6 @@ package com.fastcampus.finalproject.service;
 
 import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
-import com.fastcampus.finalproject.dto.AudioDto;
-import com.fastcampus.finalproject.dto.VideoDto;
 import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
 import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
 import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
@@ -56,7 +54,7 @@ public class ProjectService {
     private final FlaskCommunicationService flaskCommunicationService;
 
     private final S3Uploader s3Uploader;
-    private final YmlFlaskConfig localFileConfig;
+    private final YmlFlaskConfig flaskConfig;
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 4;
@@ -168,7 +166,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
-        String filepath = localFileConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
+        String filepath = flaskConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
         byte[] fileBinary = getFileBinary(filepath);
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
@@ -198,7 +196,7 @@ public class ProjectService {
 
         if(audioResponse.getStatus().equals("Success")) {
             File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, localFileConfig.getAudioExtension()); //s3 연동 -> url 받기
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, flaskConfig.getAudioExtension()); //s3 연동 -> url 받기
 
             return new InsertTextPageResponse("Success", savedFileBucketUrl);
         } else {
@@ -217,8 +215,8 @@ public class ProjectService {
         );
 
         if(videoResponse.getStatus().equals("Success")) {
-            File file = new File(localFileConfig.createVideoFilePath(videoResponse.getId()));
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, localFileConfig.getVideoExtension());
+            File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject, flaskConfig.getVideoExtension());
             Video savedVideo = videoRepository.save(new Video(findProject.getName(), savedFileBucketUrl, findProject.getUser()));
 
             return new CompleteAvatarPageResponse("Success", savedVideo);
@@ -228,7 +226,7 @@ public class ProjectService {
     }
 
     private String getFilePath(String id) {
-        return localFileConfig.createAudioFilePath(id);
+        return flaskConfig.createAudioFilePath(id);
     }
 
     private String getSavedFileBucketUrl(File file, Project project, String fileExtension) {
