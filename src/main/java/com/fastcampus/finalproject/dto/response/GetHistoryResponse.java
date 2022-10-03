@@ -50,7 +50,7 @@ public class GetHistoryResponse {
         public VideoDto(Video video) {
             this.videoId = video.getId();
             this.videoName = video.getName();
-            this.thumbnail = video.getThumbnail();
+            //this.thumbnail = video.getThumbnail();
             this.videoUrl = video.getVideoUrl();
             this.createdAt = customizedDateTime(video.getCreatedAt());
         }

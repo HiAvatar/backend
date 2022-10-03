@@ -16,8 +16,8 @@ public class Video extends BaseTimeEntity {
     @Column(name = "VIDEO_NAME", nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String thumbnail;
+//    @Column(nullable = false)
+//    private String thumbnail;
 
     @Column(nullable = false)
     private String videoUrl;
@@ -25,4 +25,13 @@ public class Video extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_UID")
     private UserBasic user;
+
+    public Video(String videoResponse, String videoUrl, UserBasic user) {
+        this.name = videoResponse;
+        this.videoUrl = videoUrl;
+        this.user = user;
+    }
+
+    public Video() {}
+
 }
