@@ -44,7 +44,7 @@ public class GetHistoryResponse {
             this.videoId = video.getId();
             this.videoName = video.getName();
             this.videoUrl = video.getVideoUrl();
-            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreateAt());
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
         }
     }
 }
