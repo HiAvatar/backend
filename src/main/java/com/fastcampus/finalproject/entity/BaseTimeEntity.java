@@ -21,12 +21,12 @@ public class BaseTimeEntity {
 //    @LastModifiedDate
 //    @Column(nullable = false)
 //    private LocalDateTime lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-    private ZonedDateTime createAt;
+    private ZonedDateTime createdAt;
     private ZonedDateTime lastModifiedAt;
 
     @PrePersist
     public void prePersist() {
-        this.createAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         this.lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
