@@ -5,6 +5,7 @@ import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyBackground;
+import com.fastcampus.finalproject.util.CustomTimeUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
@@ -39,11 +40,7 @@ public class AvatarPageDto {
             this.result = result;
             this.videoId = video.getId();
             this.videoName = video.getName();
-            this.createdAt = customizedDateTime(video.getCreatedAt());
-        }
-
-        private String customizedDateTime(LocalDateTime dateTime) {
-            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
         }
     }
 
