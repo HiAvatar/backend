@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.EntityListeners;
 import javax.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass
@@ -17,9 +18,9 @@ public class BaseTimeEntity {
 
     @CreatedDate
     @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
     @LastModifiedDate
     @Column(nullable = false)
-    private LocalDateTime lastModifiedAt;
+    private LocalDateTime lastModifiedAt = LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();;
 }
