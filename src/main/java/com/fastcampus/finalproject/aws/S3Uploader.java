@@ -8,6 +8,7 @@ import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -22,11 +23,6 @@ public class S3Uploader {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
-    // 멀티 파트 -> File 변환해서 업로드
-//    public String uploadMultipartFile(MultipartFile multipartFile) {
-//
-//    }
 
     public String uploadFile(File uploadFile, String userPath) {
         String bucketPath = userPath + "/" + uploadFile.getName();

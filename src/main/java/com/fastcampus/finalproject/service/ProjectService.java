@@ -2,40 +2,41 @@ package com.fastcampus.finalproject.service;
 
 import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
-import com.fastcampus.finalproject.dto.request.InsertTextPageRequest;
-import com.fastcampus.finalproject.dto.response.CreateProjectResponse;
-import com.fastcampus.finalproject.dto.response.GetHistoryResponse;
-import com.fastcampus.finalproject.dto.response.GetTextPageResponse;
-import com.fastcampus.finalproject.dto.response.InsertTextPageResponse;
+import com.fastcampus.finalproject.dto.request.*;
+import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarList;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
+import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.fastcampus.finalproject.dto.AudioDto.*;
+import static com.fastcampus.finalproject.dto.AudioDto.AudioRequest;
+import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.*;
 import static com.fastcampus.finalproject.dto.AvatarPageDto.GetAvatarPageResponse.*;
-import static com.fastcampus.finalproject.dto.VideoDto.*;
-import static com.fastcampus.finalproject.dto.response.GetHistoryResponse.*;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoRequest;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
+import static com.fastcampus.finalproject.dto.response.GetHistoryResponse.ProjectDto;
+import static com.fastcampus.finalproject.dto.response.GetHistoryResponse.VideoDto;
 import static com.fastcampus.finalproject.dto.response.GetTextPageResponse.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
@@ -43,6 +44,7 @@ import static com.fastcampus.finalproject.enums.SexType.MALE;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -59,6 +61,101 @@ public class ProjectService {
 
     private static final int START_AVATAR_IDX = 1;
     private static final int END_AVATAR_IDX = 4;
+
+    /**
+     * 프로젝트 이름 변경
+     */
+    @Transactional
+    public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        findProject.changeProjectName(request.getProjectName());
+        return new UpdateProjectNameResponse(request.getProjectName());
+    }
+
+    /**
+     * 음성 파일 업로드
+     */
+    @Transactional
+    public void addAudioFile(Long projectId, AudioFileUploadRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
+
+        s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+
+        findProject.changeAudioFileName(saveName.substring(saveName.indexOf(".")));
+        findProject.changeTotalAudioURl(ProjectDefaultType.EMPTY.getValue());
+    }
+
+    private String saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
+        byte[] decode = Base64.getDecoder().decode(String.valueOf(audioFileBase64));
+        FileOutputStream fos;
+        File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
+
+        try {
+            target.createNewFile();
+            fos = new FileOutputStream(target);
+            fos.write(decode);
+            fos.close();
+
+            return uuid + "_" + audioFileName;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 텍스트 페이지에서 한 문장에 대한 Audio File 생성
+     */
+    @Transactional
+    public SentenceInputResponse getAudioFile(SentenceInputRequest request) {
+        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
+                new AudioRequest(request.getText(), "none", "result")
+        );
+
+        String audioFilePath = flaskConfig.createAudioFilePath(audioResponse.getId());
+        byte[] audioBinaryFile = getAudioFileBinary(audioFilePath);
+        String audioBase64toString = Base64.getEncoder().encodeToString(audioBinaryFile);
+
+        if (audioResponse.getStatus().equals("Success")) {
+            return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
+        } else {
+            return new SentenceInputResponse(audioResponse.getStatus());
+        }
+    }
+
+    private static byte[] getAudioFileBinary(String filepath) {
+        File file = new File(filepath);
+        byte[] data = new byte[(int) file.length()];
+        try (FileInputStream stream = new FileInputStream(file)) {
+            stream.read(data, 0, data.length);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
+    /**
+     * 처음 텍스트 팝업창으로 저장
+     */
+    @Transactional
+    public TextInputResponse getAudio(Long projectId, TextInputRequest texts) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+
+        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
+
+        if(audioResponse.getStatus().equals("Success")) {
+            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
+            s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+
+            findProject.changeAudioFileName(audioResponse.getId());
+            findProject.changeTotalAudioURl(savedFileBucketUrl);
+
+            return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
+        } else {
+            return new TextInputResponse(audioResponse.getStatus());
+        }
+    }
 
     @Transactional(readOnly = true)
     public GetHistoryResponse getHistory(Long userUid) {
@@ -104,7 +201,7 @@ public class ProjectService {
 
         List<TextDto> splitTextList = new ArrayList<>();
         for (int i = 0; i < textList.size(); i++) {
-            splitTextList.add(new TextDto(i+1, textList.get(i), sentenceSpacingList.get(i)));
+            splitTextList.add(new TextDto(i + 1, textList.get(i), sentenceSpacingList.get(i)));
         }
 
         List<DummyVoice> koreanList = dummyVoiceRepository.findAllByLanguage(KOREAN.getValue());
@@ -168,34 +265,25 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
         String filepath = flaskConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
-        byte[] fileBinary = getFileBinary(filepath);
+        byte[] fileBinary = getAudioFileBinary(filepath);
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
         return new AvatarPreviewResponse(base64String);
     }
 
-    private static byte[] getFileBinary(String filepath) {
-        File file = new File(filepath);
-        byte[] bytes = new byte[(int) file.length()];
-
-        try(FileInputStream stream = new FileInputStream(file)) {
-            stream.read(bytes, 0, bytes.length);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return bytes;
-    }
-
+    /**
+     * 텍스트 페이지에서 Audio 정보 추가
+     */
     @Transactional
-    public InsertTextPageResponse insertTextPageTemp(Long projectId, InsertTextPageRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).get();
-        findProject.getAudio().changeTexts(request.getTexts());
+    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        findProject.getAudio().changeAudioInfo(request);
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
                 new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
         );
 
-        if(audioResponse.getStatus().equals("Success")) {
+        if (audioResponse.getStatus().equals("Success")) {
             File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
             String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
 
@@ -203,25 +291,28 @@ public class ProjectService {
             s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
 
             findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioUrl(savedFileBucketUrl);
-            return new InsertTextPageResponse("Success", savedFileBucketUrl);
+            findProject.changeTotalAudioURl(savedFileBucketUrl);
+            return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
         } else {
-            return new InsertTextPageResponse("Failed", null);
+            return new TotalAudioSyntheticResponse("Failed", null);
         }
     }
 
+    /**
+     * 아바타 페이지에서 아바타 정보로 영상 생성
+     */
     @Transactional
-    public CompleteAvatarPageResponse insertAvatarPageTemp(Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).get();
-        findProject.getAvatar().changeAvatarSelection(request.getAvatarName(), request.getAvatarType(), request.getBgName());
+    public CompleteAvatarPageResponse addAvatarInfo(Long projectId, AvatarPageRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
         //영상 합성
         VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
                 new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
         );
 
-        if(videoResponse.getStatus().equals("Success")) {
-            File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+        if (videoResponse.getStatus().equals("Success")) {
+                File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
             String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject);
 
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자

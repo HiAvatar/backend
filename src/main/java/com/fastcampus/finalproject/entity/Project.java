@@ -3,6 +3,7 @@ package com.fastcampus.finalproject.entity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import javax.persistence.*;
 @Getter
 @DynamicUpdate
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Slf4j
 public class Project extends BaseTimeEntity {
 
     private static final String EMPTY = "미정";
@@ -50,5 +52,17 @@ public class Project extends BaseTimeEntity {
 
     public void initProjectName(String name) {
         this.name = name;
+    }
+
+    public void changeTotalAudioURl(String totalAudioUrl) {
+        this.totalAudioUrl = totalAudioUrl;
+    }
+
+    public void changeAudioFileName(String audioFileName) {
+        this.audioFileName = audioFileName;
+    }
+
+    public void changeProjectName(String projectName) {
+        this.name = projectName;
     }
 }
