@@ -178,7 +178,7 @@ public class ProjectService {
         UserBasic user = userRepository.findById(userUid).get();
         Project savedProject = projectRepository.save(new Project(user));
 
-        savedProject.initProjectName(CustomTimeUtil.convertDateTime(savedProject.getCreatedAt()));
+        savedProject.initProjectName(CustomTimeUtil.convertDateTime(savedProject.getCreateAt()));
         return new CreateProjectResponse(savedProject.getId(), savedProject.getName());
     }
 
@@ -331,6 +331,6 @@ public class ProjectService {
     }
 
     private String getProjectPath(Project project) {
-        return project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreatedAt() + "_" + project.getId();
+        return project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreateAt() + "_" + project.getId();
     }
 }

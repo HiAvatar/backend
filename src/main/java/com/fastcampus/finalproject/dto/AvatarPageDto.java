@@ -9,8 +9,6 @@ import com.fastcampus.finalproject.util.CustomTimeUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AvatarPageDto {
@@ -40,7 +38,7 @@ public class AvatarPageDto {
             this.result = result;
             this.videoId = video.getId();
             this.videoName = video.getName();
-            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreateAt());
         }
     }
 
