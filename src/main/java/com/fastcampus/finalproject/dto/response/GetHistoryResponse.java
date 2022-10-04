@@ -42,15 +42,12 @@ public class GetHistoryResponse {
 
         private Long videoId;
         private String videoName;
-        private String thumbnail;
         private String videoUrl;
-
         private String createdAt;
 
         public VideoDto(Video video) {
             this.videoId = video.getId();
             this.videoName = video.getName();
-            //this.thumbnail = video.getThumbnail();
             this.videoUrl = video.getVideoUrl();
             this.createdAt = customizedDateTime(video.getCreatedAt());
         }

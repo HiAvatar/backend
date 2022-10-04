@@ -13,5 +13,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("select p from Project p where p.user.uid = :userUid order by p.lastModifiedAt desc")
     List<Project> findAllByUserUid(@Param("userUid") Long userUid);
 
-    Optional<Project> findByUserUidAndId(Long userUid, Long projectId);
+    @Query("select p from Project p join fetch p.user where p.id = :projectId")
+    Optional<Project> findWithUserById(@Param("projectId") Long projectId);
 }

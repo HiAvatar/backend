@@ -1,11 +1,9 @@
 package com.fastcampus.finalproject.dto.request;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-public class TextInputRequest {
+public class InsertTextPageRequest {
 
     private String texts;
 }

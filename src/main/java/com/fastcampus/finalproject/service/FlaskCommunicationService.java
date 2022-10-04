@@ -1,6 +1,6 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.repository.ProjectRepository;
+import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 
 import static com.fastcampus.finalproject.dto.AudioDto.AudioRequest;
 import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoRequest;
+import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -20,30 +22,60 @@ import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
 public class FlaskCommunicationService {
 
     private final ObjectMapper objectMapper;
+    private final YmlFlaskConfig flaskConfig;
 
-    public AudioResponse getAudioResult(AudioRequest request) throws JsonProcessingException {
+    public AudioResponse getAudioResult(AudioRequest request) {
+        try {
+            String params = objectMapper.writeValueAsString(request);
+
+            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
+            ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestAudioApi());
+            writeLogAboutResponse(responseEntity);
+
+            return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public VideoResponse getVideoResult(VideoRequest request) {
+        try {
+            String params = objectMapper.writeValueAsString(request);
+
+            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
+            ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestVideoApi());
+            writeLogAboutResponse(responseEntity);
+
+            return objectMapper.readValue(responseEntity.getBody(), VideoResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private HttpHeaders getHttpHeaders() {
         //헤더 설정
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
-        //Object Mapper로 JSON 바인딩
-        String params = objectMapper.writeValueAsString(request);
+        return httpHeaders;
+    }
 
+    private HttpEntity<String> getHttpEntity(String params, HttpHeaders httpHeaders) throws JsonProcessingException {
         //HttpEntity에 헤더 및 params 설정
-        HttpEntity<String> entity = new HttpEntity<>(params, httpHeaders);
+        return new HttpEntity<>(params, httpHeaders);
+    }
 
+    private ResponseEntity<String> getResponseEntity(HttpEntity<String> entity, String requestApi) {
         //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> responseEntity = restTemplate.exchange(
-                "http://localhost:8000/request_audio",
+        return restTemplate.exchange(
+                requestApi,
                 HttpMethod.POST,
                 entity,
                 String.class);
+    }
 
+    private void writeLogAboutResponse(ResponseEntity<String> responseEntity) {
         log.info("audio responseCode: {}", responseEntity.getStatusCode());
         log.info("audio responseBody: {}", responseEntity.getBody());
-
-        return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
     }
 }
-
-
