@@ -38,7 +38,7 @@ public class AvatarPageDto {
             this.result = result;
             this.videoId = video.getId();
             this.videoName = video.getName();
-            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreateAt());
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
         }
     }
 
