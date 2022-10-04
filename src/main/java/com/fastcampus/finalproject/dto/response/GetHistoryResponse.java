@@ -5,8 +5,6 @@ import com.fastcampus.finalproject.entity.Video;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Data
@@ -46,7 +44,7 @@ public class GetHistoryResponse {
             this.videoId = video.getId();
             this.videoName = video.getName();
             this.videoUrl = video.getVideoUrl();
-            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreateAt());
         }
     }
 }

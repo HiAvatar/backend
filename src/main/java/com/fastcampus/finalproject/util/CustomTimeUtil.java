@@ -1,14 +1,13 @@
 package com.fastcampus.finalproject.util;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 public class CustomTimeUtil {
 
     private CustomTimeUtil() {}
 
-    public static String convertDateTime(LocalDateTime dateTime) {
+    public static String convertDateTime(ZonedDateTime dateTime) {
         return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }
