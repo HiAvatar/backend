@@ -5,23 +5,33 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.Column;
-import javax.persistence.EntityListeners;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-@EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass
 @Getter
 public class BaseTimeEntity {
 
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+//    @CreatedDate
+//    @Column(updatable = false, nullable = false)
+//    private LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+//
+//    @LastModifiedDate
+//    @Column(nullable = false)
+//    private LocalDateTime lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+    private ZonedDateTime createAt;
+    private ZonedDateTime lastModifiedAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+    @PrePersist
+    public void prePersist() {
+        this.createAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+    }
 }
