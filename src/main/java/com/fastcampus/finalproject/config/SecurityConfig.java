@@ -3,6 +3,8 @@ package com.fastcampus.finalproject.config;
 import com.fastcampus.finalproject.config.security.jwt.filter.JwtAuthenticationFilter;
 import com.fastcampus.finalproject.config.security.jwt.filter.JwtAuthorizationFilter;
 import com.fastcampus.finalproject.config.security.jwt.filter.JwtExceptionTranslationFilter;
+import com.fastcampus.finalproject.config.security.jwt.handler.JwtAccessDeniedHandler;
+import com.fastcampus.finalproject.config.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.fastcampus.finalproject.config.security.jwt.handler.JwtAuthenticationFailureHandler;
 import com.fastcampus.finalproject.config.security.jwt.handler.JwtAuthenticationSuccessHandler;
 import com.fastcampus.finalproject.config.security.jwt.provider.CustomAuthenticationProvider;
@@ -59,6 +61,11 @@ public class SecurityConfig {
                 .antMatchers("/sign-up", "/sign-up/**").permitAll()
                 .antMatchers("/login").permitAll()
                 .anyRequest().authenticated();
+
+        httpSecurity
+                .exceptionHandling()
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                .accessDeniedHandler(new JwtAccessDeniedHandler());
 
         httpSecurity
                 .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
