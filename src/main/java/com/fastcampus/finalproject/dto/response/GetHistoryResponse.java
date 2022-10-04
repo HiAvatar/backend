@@ -2,6 +2,7 @@ package com.fastcampus.finalproject.dto.response;
 
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.Video;
+import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,11 +30,7 @@ public class GetHistoryResponse {
         public ProjectDto(Project project) {
             this.projectId = project.getId();
             this.projectName = project.getName();
-            this.lastModifiedAt = customizedDateTime(project.getLastModifiedAt());
-        }
-
-        private String customizedDateTime(LocalDateTime dateTime) {
-            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+            this.lastModifiedAt = CustomTimeUtil.convertDateTime(project.getLastModifiedAt());
         }
     }
 
@@ -49,10 +46,7 @@ public class GetHistoryResponse {
             this.videoId = video.getId();
             this.videoName = video.getName();
             this.videoUrl = video.getVideoUrl();
-            this.createdAt = customizedDateTime(video.getCreatedAt());
-        }
-        private String customizedDateTime(LocalDateTime dateTime) {
-            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+            this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
         }
     }
 }

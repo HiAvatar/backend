@@ -13,6 +13,7 @@ import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
+import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -177,12 +178,8 @@ public class ProjectService {
         UserBasic user = userRepository.findById(userUid).get();
         Project savedProject = projectRepository.save(new Project(user));
 
-        savedProject.initProjectName(customizedDateTime(savedProject.getCreatedAt()));
+        savedProject.initProjectName(CustomTimeUtil.convertDateTime(savedProject.getCreatedAt()));
         return new CreateProjectResponse(savedProject.getId(), savedProject.getName());
-    }
-
-    private String customizedDateTime(LocalDateTime dateTime) {
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
     }
 
     @Transactional(readOnly = true)
