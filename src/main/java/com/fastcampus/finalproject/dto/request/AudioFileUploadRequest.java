@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class AudioFileUploadRequest {
+
     private String audioFileName;
     private String audioFile;
-
 }

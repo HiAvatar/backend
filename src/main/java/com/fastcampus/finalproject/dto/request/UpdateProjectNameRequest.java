@@ -6,9 +6,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class UpdateProjectNameRequest {
-    private String projectName;
 
-    public UpdateProjectNameRequest(String projectName) {
-        this.projectName = projectName;
-    }
+    private String projectName;
 }
