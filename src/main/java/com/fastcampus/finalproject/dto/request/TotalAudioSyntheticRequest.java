@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.dto.request;
 
+import com.fastcampus.finalproject.entity.Audio;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,8 +27,12 @@ public class TotalAudioSyntheticRequest {
         private Integer sentenceSpacing;
     }
 
-    public String splitTextListToEntity() {
+    public String splitTextListToString() {
         // List<SplitText> 의 각 sentenceSpacing 들을 '|' 구분자로 나눠서 합친 후 -> 하나의 string 으로 반환해주기
         return this.splitTextList.stream().map(s -> s.getSentenceSpacing().toString()).collect(Collectors.joining("|"));
+    }
+
+    public void changeAudioInfo(Audio audio) {
+        audio.changeAudioInfo(language, sex, characterName, speed, pitch, sentenceSpacing, texts, splitTextListToString());
     }
 }

@@ -15,7 +15,6 @@ import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -277,7 +276,7 @@ public class ProjectService {
     @Transactional
     public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
-        findProject.getAudio().changeAudioInfo(request);
+        request.changeAudioInfo(findProject.getAudio());
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
                 new AudioRequest(findProject.getAudio().getTexts(), "none", "result")

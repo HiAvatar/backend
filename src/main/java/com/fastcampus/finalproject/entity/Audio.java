@@ -7,7 +7,6 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Lob;
 
-
 import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 
 @Embeddable
@@ -15,7 +14,7 @@ import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 public class Audio {
 
     private static final Integer DEFAULT_CONTROL = 0;
-    //private static final String DEFAULT_SENTENCE_SPACING_LIST = "0";
+    private static final String DEFAULT_SENTENCE_SPACING_LIST = "0";
 
     @Column(name = "LANG", nullable = false)
     private String language;
@@ -49,23 +48,18 @@ public class Audio {
         this.speed = DEFAULT_CONTROL;
         this.pitch = DEFAULT_CONTROL;
         this.sentenceSpacing = DEFAULT_CONTROL;
-        this.sentenceSpacingList = EMPTY.getValue();
+        this.sentenceSpacingList = DEFAULT_SENTENCE_SPACING_LIST;
         this.texts = EMPTY.getValue();
-        //this.sentenceSpacingList = DEFAULT_SENTENCE_SPACING_LIST;
     }
 
-    public void changeAudioInfo(TotalAudioSyntheticRequest totalAudioInfo) {
-        this.language = totalAudioInfo.getLanguage();
-        this.sex = totalAudioInfo.getSex();
-        this.characterVoice = totalAudioInfo.getCharacterName();
-        this.speed = totalAudioInfo.getSpeed();
-        this.pitch = totalAudioInfo.getPitch();
-        this.sentenceSpacing = totalAudioInfo.getSentenceSpacing();
-        this.texts = totalAudioInfo.getTexts();
-        this.sentenceSpacingList = totalAudioInfo.SplitTextListToEntity();
-    }
-
-    public void changeTexts(String texts) {
+    public void changeAudioInfo(String language, String sex, String characterVoice, Integer speed, Integer pitch, Integer sentenceSpacing, String texts, String sentenceSpacingList) {
+        this.language = language;
+        this.sex = sex;
+        this.characterVoice = characterVoice;
+        this.speed = speed;
+        this.pitch = pitch;
+        this.sentenceSpacing = sentenceSpacing;
         this.texts = texts;
+        this.sentenceSpacingList = sentenceSpacingList;
     }
 }
