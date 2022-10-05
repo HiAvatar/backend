@@ -92,7 +92,6 @@ public class ProjectService {
         File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
 
         try {
-            target.createNewFile();
             fos = new FileOutputStream(target);
             fos.write(decode);
             fos.close();
