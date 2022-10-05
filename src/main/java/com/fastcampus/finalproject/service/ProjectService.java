@@ -23,8 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +61,18 @@ public class ProjectService {
     private static final int END_AVATAR_IDX = 4;
 
     /**
+     * 신규 프로젝트 생성
+     */
+    @Transactional
+    public CreateProjectResponse create(Long userUid) {
+        UserBasic user = userRepository.findById(userUid).get();
+        Project savedProject = projectRepository.save(new Project(user));
+
+        savedProject.initProjectName(CustomTimeUtil.convertDateTime(savedProject.getCreatedAt()));
+        return new CreateProjectResponse(savedProject.getId(), savedProject.getName());
+    }
+
+    /**
      * 프로젝트 이름 변경
      */
     @Transactional
@@ -73,10 +83,56 @@ public class ProjectService {
     }
 
     /**
+     * 프로젝트 및 영상 히스토리 조회
+     */
+    @Transactional(readOnly = true)
+    public GetHistoryResponse getHistory(Long userUid) {
+
+        List<ProjectDto> projects = projectRepository.findAllByUserUid(userUid)
+                .stream()
+                .map(ProjectDto::new)
+                .collect(Collectors.toList());
+
+        List<VideoDto> videos = videoRepository.findAllByUserUid(userUid)
+                .stream()
+                .map(VideoDto::new)
+                .collect(Collectors.toList());
+
+        return new GetHistoryResponse(projects, videos);
+    }
+
+    /**
+     * 텍스트 페이지에서 Audio 정보 추가 및 음성 생성
+     */
+    @Transactional
+    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        request.changeAudioInfo(findProject.getAudio());
+
+        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
+                new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
+        );
+
+        if (audioResponse.getStatus().equals("Success")) {
+            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
+
+            //기존 파일 삭제시키기 (s3, local)
+            s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+
+            findProject.changeAudioFileName(audioResponse.getId());
+            findProject.changeTotalAudioURl(savedFileBucketUrl);
+            return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
+        } else {
+            return new TotalAudioSyntheticResponse("Failed", null);
+        }
+    }
+
+    /**
      * 음성 파일 업로드
      */
     @Transactional
-    public void addAudioFile(Long projectId, AudioFileUploadRequest request) {
+    public void uploadAudioFile(Long projectId, AudioFileUploadRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
         String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
 
@@ -106,7 +162,7 @@ public class ProjectService {
      * 텍스트 페이지에서 한 문장에 대한 Audio File 생성
      */
     @Transactional
-    public SentenceInputResponse getAudioFile(SentenceInputRequest request) {
+    public SentenceInputResponse getAudioFileAboutOneSentence(SentenceInputRequest request) {
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
                 new AudioRequest(request.getText(), "none", "result")
         );
@@ -137,7 +193,7 @@ public class ProjectService {
      * 처음 텍스트 팝업창으로 저장
      */
     @Transactional
-    public TextInputResponse getAudio(Long projectId, TextInputRequest texts) {
+    public TextInputResponse getAudioFileAboutScript(Long projectId, TextInputRequest texts) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
@@ -156,31 +212,37 @@ public class ProjectService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public GetHistoryResponse getHistory(Long userUid) {
-
-        List<ProjectDto> projects = projectRepository.findAllByUserUid(userUid)
-                .stream()
-                .map(ProjectDto::new)
-                .collect(Collectors.toList());
-
-        List<VideoDto> videos = videoRepository.findAllByUserUid(userUid)
-                .stream()
-                .map(VideoDto::new)
-                .collect(Collectors.toList());
-
-        return new GetHistoryResponse(projects, videos);
-    }
-
+    /**
+     * 아바타 페이지에서 아바타 정보로 영상 생성
+     */
     @Transactional
-    public CreateProjectResponse create(Long userUid) {
-        UserBasic user = userRepository.findById(userUid).get();
-        Project savedProject = projectRepository.save(new Project(user));
+    public CompleteAvatarPageResponse addAvatarInfo(Long projectId, AvatarPageRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
+        findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
-        savedProject.initProjectName(CustomTimeUtil.convertDateTime(savedProject.getCreatedAt()));
-        return new CreateProjectResponse(savedProject.getId(), savedProject.getName());
+        //영상 합성
+        VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
+                new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
+        );
+
+        if (videoResponse.getStatus().equals("Success")) {
+                File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject);
+
+            //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
+            s3Uploader.removeLocalFile(file);
+
+            Video savedVideo = videoRepository.save(new Video(findProject.getName(), savedFileBucketUrl, findProject.getUser()));
+
+            return new CompleteAvatarPageResponse("Success", savedVideo);
+        } else {
+            return new CompleteAvatarPageResponse("Failed");
+        }
     }
 
+    /**
+     * 텍스트 페이지에 관한 데이터 조회
+     */
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long projectId) {
         Project findProject = projectRepository.findById(projectId)
@@ -218,6 +280,9 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 아바타 선택 페이지에 관한 데이터 조회
+     */
     @Transactional(readOnly = true)
     public GetAvatarPageResponse getAvatarPageData(Long projectId) {
         Project findProject = projectRepository.findById(projectId)
@@ -257,6 +322,9 @@ public class ProjectService {
                 .map(AvatarDivisionDto::new).collect(Collectors.toList());
     }
 
+    /**
+     * 아바타 미리보기
+     */
     @Transactional(readOnly = true)
     public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
         String filepath = flaskConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
@@ -264,61 +332,6 @@ public class ProjectService {
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
         return new AvatarPreviewResponse(base64String);
-    }
-
-    /**
-     * 텍스트 페이지에서 Audio 정보 추가
-     */
-    @Transactional
-    public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
-        request.changeAudioInfo(findProject.getAudio());
-
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
-        );
-
-        if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
-
-            //기존 파일 삭제시키기 (s3, local)
-            s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
-            return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
-        } else {
-            return new TotalAudioSyntheticResponse("Failed", null);
-        }
-    }
-
-    /**
-     * 아바타 페이지에서 아바타 정보로 영상 생성
-     */
-    @Transactional
-    public CompleteAvatarPageResponse addAvatarInfo(Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
-        findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
-
-        //영상 합성
-        VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
-                new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
-        );
-
-        if (videoResponse.getStatus().equals("Success")) {
-                File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject);
-
-            //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
-            s3Uploader.removeLocalFile(file);
-
-            Video savedVideo = videoRepository.save(new Video(findProject.getName(), savedFileBucketUrl, findProject.getUser()));
-
-            return new CompleteAvatarPageResponse("Success", savedVideo);
-        } else {
-            return new CompleteAvatarPageResponse("Failed");
-        }
     }
 
     private String getFilePath(String id) {

@@ -57,7 +57,7 @@ public class ProjectController {
      * */
     @PostMapping("/projects/{projectId}/audio-file")
     public ResponseWrapper<Void> addAudioFile(@PathVariable Long projectId, @RequestBody AudioFileUploadRequest request) {
-        projectService.addAudioFile(projectId, request);
+        projectService.uploadAudioFile(projectId, request);
         return new ResponseWrapper<Void>()
                 .ok();
     }
@@ -67,7 +67,7 @@ public class ProjectController {
      * */
     @PostMapping("/projects/save/text")
     public ResponseWrapper<SentenceInputResponse> addSentence(@RequestBody SentenceInputRequest request) {
-        return new ResponseWrapper<>(projectService.getAudioFile(request))
+        return new ResponseWrapper<>(projectService.getAudioFileAboutOneSentence(request))
                 .ok();
     }
 
@@ -76,7 +76,7 @@ public class ProjectController {
      * */
     @PostMapping("/projects/{projectId}/save/script")
     public ResponseWrapper<TextInputResponse> addTexts(@PathVariable Long projectId, @RequestBody TextInputRequest request) {
-        TextInputResponse textInputResponse = projectService.getAudio(projectId, request);
+        TextInputResponse textInputResponse = projectService.getAudioFileAboutScript(projectId, request);
         return new ResponseWrapper<>(textInputResponse)
                 .ok();
     }
