@@ -168,7 +168,7 @@ public class ProjectService {
 
         s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
 
-        findProject.changeAudioFileName(saveName.substring(saveName.indexOf(".")));
+        findProject.changeAudioFileName(saveName.substring(0, saveName.lastIndexOf(".")));
         findProject.changeTotalAudioURl(ProjectDefaultType.EMPTY.getValue());
     }
 
@@ -262,7 +262,7 @@ public class ProjectService {
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
             s3Uploader.removeLocalFile(file);
 
-            Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(file.getName().indexOf(".")), savedFileBucketUrl, findProject.getUser()));
+            Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(0, file.getName().lastIndexOf(".")), savedFileBucketUrl, findProject.getUser()));
 
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
