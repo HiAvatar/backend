@@ -187,8 +187,9 @@ public class SecurityConfig {
         String clientSecret = env.getProperty(CLIENT_PROPERTY_KEY + client + ".client-secret");
 
         if (client.equals("google")) {
-            return CommonOAuth2Provider.GOOGLE.getBuilder(client)
-                    .clientId(clientId).clientSecret(clientSecret).scope("email", "profile").build();
+            ClientRegistration cr = CommonOAuth2Provider.GOOGLE.getBuilder(client)
+                    .clientId(clientId).redirectUri("https://hiavatar.minoflower.com/login/oauth2/code/google").clientSecret(clientSecret).scope("email", "profile").build();
+            return  cr;
         }
 
         if (client.equals("kakao")) {
@@ -196,7 +197,7 @@ public class SecurityConfig {
                     .clientId(clientId)
                     .clientSecret(clientSecret)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                    .redirectUri("http://localhost:8080/login/oauth2/code/kakao")
+                    .redirectUri("https://hiavatar.minoflower.com/login/oauth2/code/kakao")
                     .authorizationUri("https://kauth.kakao.com/oauth/authorize")
                     .tokenUri("https://kauth.kakao.com/oauth/token")
                     .userInfoUri("https://kapi.kakao.com/v2/user/me")
