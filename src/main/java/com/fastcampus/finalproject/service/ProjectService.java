@@ -225,7 +225,7 @@ public class ProjectService {
     @Transactional
     public TextInputResponse getAudioFileAboutScript(Long projectId, TextInputRequest texts) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
-
+        findProject.getAudio().changeTexts(texts.getTexts());
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
         if (audioResponse.getStatus().equals("Success")) {
