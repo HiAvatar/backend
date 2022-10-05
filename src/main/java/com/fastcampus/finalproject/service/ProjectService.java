@@ -113,10 +113,10 @@ public class ProjectService {
             videos.remove(videos.size() - 1);
 
             //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
-            //audio 폴더, video 폴더로 나누기
-            //projectRepository.findWithUserById()
-            //s3Uploader.removeFile(getProjectPath());
-            removeVideo.getName();
+            //user/project/오디오 파일
+            //user/videos/
+//            s3Uploader.removeFile(getProjectPath(), FileType.VIDEO, removeVideo.getName());
+//            removeVideo.getName();
         }
 
         List<VideoDto> videoDtos = videos.stream()
@@ -143,7 +143,7 @@ public class ProjectService {
             String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
 
             //기존 파일 삭제시키기 (s3, local)
-            s3Uploader.removeFile(getProjectPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
 
             findProject.changeAudioFileName(audioResponse.getId());
             findProject.changeTotalAudioURl(savedFileBucketUrl);
@@ -161,7 +161,7 @@ public class ProjectService {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(() -> new NoSuchElementException("프로젝트가 존재하지 않습니다."));
         String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
 
-        s3Uploader.removeFile(getProjectPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+        s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
 
         findProject.changeAudioFileName(saveName.substring(saveName.indexOf(".")));
         findProject.changeTotalAudioURl(ProjectDefaultType.EMPTY.getValue());
@@ -226,7 +226,7 @@ public class ProjectService {
         if (audioResponse.getStatus().equals("Success")) {
             File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
             String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-            s3Uploader.removeFile(getProjectPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
+            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName() + flaskConfig.getAudioExtension());
 
             findProject.changeAudioFileName(audioResponse.getId());
             findProject.changeTotalAudioURl(savedFileBucketUrl);
@@ -364,10 +364,23 @@ public class ProjectService {
     }
 
     private String getSavedFileBucketUrl(File file, FileType fileType, Project project) {
-        return s3Uploader.uploadFile(file, fileType, getProjectPath(project));
+        if(fileType == FileType.AUDIO)
+            return s3Uploader.uploadFile(file, fileType, beMappedS3AudioPath(project));
+        else
+            return s3Uploader.uploadFile(file, fileType, beMappedS3VideoPath(project));
     }
 
-    private String getProjectPath(Project project) {
-        return project.getUser().getUserName() + "_" + project.getUser().getUid() + "/" + project.getCreatedAt() + "_" + project.getId();
+    private String beMappedS3AudioPath(Project project) {
+        return project.getUser().getUserName() +
+                "_" +
+                project.getUser().getUid() +
+                "/" +
+                CustomTimeUtil.convertDateTime(project.getCreatedAt()) +
+                "_" +
+                project.getId();
+    }
+
+    private String beMappedS3VideoPath(Project project) {
+        return project.getUser().getUserName() + "_" + project.getUser().getUid();
     }
 }
