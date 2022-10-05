@@ -6,8 +6,11 @@ import com.fastcampus.finalproject.dto.ResponseWrapper;
 import com.fastcampus.finalproject.dto.response.JwtDto;
 import com.fastcampus.finalproject.entity.UserRefreshToken;
 import com.fastcampus.finalproject.repository.RefreshTokenRepository;
+import com.fastcampus.finalproject.service.auth.dto.OAuthUserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +31,11 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            Long userUid = ((OAuthUserContext) authentication.getPrincipal()).getUserUid();
+            authentication = new UsernamePasswordAuthenticationToken(userUid, authentication.getAuthorities());
+        }
+
         String accessToken = accessTokenUtility.createJsonWebToken(authentication);
         String refreshToken = refreshTokenUtility.createRefreshJsonWebToken(authentication);
 
