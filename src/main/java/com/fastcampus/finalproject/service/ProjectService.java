@@ -198,7 +198,7 @@ public class ProjectService {
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
-        if(audioResponse.getStatus().equals("Success")) {
+        if (audioResponse.getStatus().equals("Success")) {
             File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
             String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject); //s3 연동 -> url 반환
             s3Uploader.removeFile(getProjectPath(findProject), findProject.getAudioFileName() + flaskConfig.getAudioExtension());
@@ -226,7 +226,7 @@ public class ProjectService {
         );
 
         if (videoResponse.getStatus().equals("Success")) {
-                File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+            File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
             String savedFileBucketUrl = getSavedFileBucketUrl(file, findProject);
 
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
