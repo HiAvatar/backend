@@ -38,7 +38,8 @@ public class JwtExceptionTranslationFilter extends OncePerRequestFilter {
             }
 
             String serializedErrorResponse = new ObjectMapper().writeValueAsString(errorResponse);
-
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
             response.getWriter().write(serializedErrorResponse);
             response.getWriter().flush();
         }
