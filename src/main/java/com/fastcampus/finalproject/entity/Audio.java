@@ -62,4 +62,8 @@ public class Audio {
         this.texts = texts;
         this.sentenceSpacingList = sentenceSpacingList;
     }
+
+    public void changeTexts(String texts) {
+        this.texts = texts;
+    }
 }
