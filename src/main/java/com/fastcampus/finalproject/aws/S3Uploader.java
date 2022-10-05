@@ -25,13 +25,13 @@ public class S3Uploader {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public String uploadFile(File uploadFile, FileType fileType, String projectPath) {
-        String bucketPath = projectPath + "/" + fileType.getValue() + "/" + uploadFile.getName();
+    public String uploadFile(File uploadFile, FileType fileType, String parentPath) {
+        String bucketPath = parentPath + "/" + fileType.getValue() + "/" + uploadFile.getName();
         return putS3(uploadFile, bucketPath);
     }
 
-    public void removeFile(String projectPath, FileType fileType, String fileName) {
-        amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, projectPath + "/" + fileType.getValue() + "/" + fileName));
+    public void removeFile(String parentPath, FileType fileType, String fileName) {
+        amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, parentPath + "/" + fileType.getValue() + "/" + fileName));
 
         File file = new File(flaskConfig.getFilePath() + "/" + fileName);
         if(file.exists()) {
