@@ -1,9 +1,7 @@
 package com.fastcampus.finalproject.aws;
 
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.*;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fastcampus.finalproject.enums.FileType;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +28,21 @@ public class S3Uploader {
         return putS3(uploadFile, bucketPath);
     }
 
-    public void removeFile(String parentPath, FileType fileType, String fileName) {
-        amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, parentPath + "/" + fileType.getValue() + "/" + fileName));
+    public void removeFile(String parentPath, FileType fileType, String fileName, String fileExtension) {
+        amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, parentPath + "/" + fileType.getValue() + "/" + fileName + fileExtension));
 
         File file = new File(flaskConfig.getFilePath() + "/" + fileName);
         if(file.exists()) {
             removeLocalFile(file);
         }
+    }
+
+    /*
+     * 회원 탈퇴 기능이 추가되면 영상 디렉토리 삭제하는 데 사용
+     */
+    public void removeDirectory(String parentPath) {
+        DeleteObjectsResult deleteObjectsResult = amazonS3Client.deleteObjects(new DeleteObjectsRequest(bucket)
+                .withKeys(parentPath));
     }
 
     private String putS3(File uploadFile, String bucketPath) {
