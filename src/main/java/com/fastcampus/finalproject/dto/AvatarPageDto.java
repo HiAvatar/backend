@@ -73,9 +73,9 @@ public class AvatarPageDto {
         public static class AvatarPageDummyDto {
 
             private AvatarSelectionDto avatar1;
+            private AvatarSelectionDto avatar2;
             private AvatarSelectionDto avatar3;
             private AvatarSelectionDto avatar4;
-            private AvatarSelectionDto avatar2;
             private List<BackgroundDto> backgroundList;
 
             public AvatarPageDummyDto(List<AvatarSelectionDto> avatarDtoList, List<BackgroundDto> backgroundDtoList) {
