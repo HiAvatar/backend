@@ -1,5 +1,6 @@
 server:
-  max-http-header-size: 10MB
+  tomcat:
+    max-swallow-size: 10MB
 
 spring:
   datasource:
