@@ -93,7 +93,7 @@ public class ProjectService {
      */
     @Transactional
     public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow();
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         findProject.changeProjectName(request.getProjectName());
         return new UpdateProjectNameResponse(request.getProjectName());
     }
@@ -136,7 +136,7 @@ public class ProjectService {
      */
     @Transactional
     public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow();
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         request.changeAudioInfo(findProject.getAudio());
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
@@ -163,7 +163,7 @@ public class ProjectService {
      */
     @Transactional
     public void uploadAudioFile(Long projectId, AudioFileUploadRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow();
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
 
         s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
@@ -224,7 +224,7 @@ public class ProjectService {
      */
     @Transactional
     public TextInputResponse getAudioFileAboutScript(Long projectId, TextInputRequest texts) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow();
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         findProject.getAudio().changeTexts(texts.getTexts());
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
@@ -247,7 +247,7 @@ public class ProjectService {
      */
     @Transactional
     public CompleteAvatarPageResponse addAvatarInfo(Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow();
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
         //영상 합성
@@ -276,7 +276,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long projectId) {
         Project findProject = projectRepository.findById(projectId)
-                .orElseThrow();
+                .orElseThrow(NoSuchElementException::new);
 
         List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
                 .map(String::trim)
@@ -316,7 +316,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public GetAvatarPageResponse getAvatarPageData(Long projectId) {
         Project findProject = projectRepository.findById(projectId)
-                .orElseThrow();
+                .orElseThrow(NoSuchElementException::new);
 
         List<AvatarSelectionDto> avatarDtoList = getAvatarDtoList();
         List<BackgroundDto> backgroundDtoList = dummyBackgroundRepository.findAll().stream()
