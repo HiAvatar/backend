@@ -270,6 +270,12 @@ public class ProjectService {
         }
     }
 
+    @Transactional
+    public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        request.changeAudioInfo(findProject.getAudio());
+    }
+
     /**
      * 텍스트 페이지에 관한 데이터 조회
      */
