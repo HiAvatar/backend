@@ -5,8 +5,7 @@ import lombok.Getter;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import static com.fastcampus.finalproject.enums.ProjectDefaultType.BACKGROUND;
-import static com.fastcampus.finalproject.enums.ProjectDefaultType.EMPTY;
+import static com.fastcampus.finalproject.enums.ProjectDefaultType.*;
 
 @Embeddable
 @Getter
@@ -21,9 +20,9 @@ public class Avatar {
     private String background;
 
     public Avatar() {
-        this.name = EMPTY.getValue();
+        this.name = AVATAR_NAME.getValue();
         this.type = EMPTY.getValue();
-        this.background = BACKGROUND.getValue();
+        this.background = EMPTY.getValue();
     }
 
     public void changeAvatarInfo(String name, String type, String background) {
