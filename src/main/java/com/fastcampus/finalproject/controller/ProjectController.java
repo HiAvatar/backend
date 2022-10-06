@@ -86,8 +86,12 @@ public class ProjectController {
      * */
     @PostMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<CompleteAvatarPageResponse> addAvatarInfo(@PathVariable Long projectId, @RequestBody AvatarPageRequest request) {
-        return new ResponseWrapper<>(projectService.addAvatarInfo(projectId, request))
-                .ok();
+        CompleteAvatarPageResponse response = projectService.addAvatarInfo(projectId, request);
+        if (response.getResult().equals("Success")) {
+            return new ResponseWrapper<>(response).ok();
+        } else {
+            return new ResponseWrapper<>(response).fail();
+        }
     }
 
     /**
