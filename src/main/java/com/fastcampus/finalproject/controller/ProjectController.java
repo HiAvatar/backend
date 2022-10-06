@@ -90,6 +90,13 @@ public class ProjectController {
                 .ok();
     }
 
+    @PatchMapping("/projects/{projectId}/save")
+    public ResponseWrapper<Void> saveTextPageAudioInfo(@PathVariable Long projectId, @RequestBody TotalAudioSyntheticRequest request) {
+        projectService.saveAudioInfo(projectId, request);
+        return new ResponseWrapper<Void>()
+                .ok();
+    }
+
     @GetMapping("/projects/{projectId}/save")
     public ResponseWrapper<GetTextPageResponse> getTextPage(@PathVariable Long projectId) {
         return new ResponseWrapper<>(projectService.getTextPageData(projectId))
