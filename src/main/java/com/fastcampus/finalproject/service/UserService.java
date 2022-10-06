@@ -9,6 +9,7 @@ import com.fastcampus.finalproject.enums.LoginType;
 import com.fastcampus.finalproject.exception.DuplicateIdException;
 import com.fastcampus.finalproject.repository.NativeLoginUserRepository;
 import com.fastcampus.finalproject.repository.UserRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,8 +46,13 @@ public class UserService {
     }
 
     public boolean changePassword(Long userUid, NewPasswordDto newPasswordDto) {
-        NativeLoginUser nativeLoginUser = nativeLoginUserRepository.findByUser(new UserBasic(userUid)).orElseThrow();
+        Optional<NativeLoginUser> nativeLoginUserOptional = nativeLoginUserRepository.findByUser(new UserBasic(userUid));
 
+        if (nativeLoginUserOptional.isEmpty()) {
+            return false;
+        }
+
+        NativeLoginUser nativeLoginUser = nativeLoginUserOptional.get();
         nativeLoginUser.changePassword(bCryptPasswordEncoder.encode(newPasswordDto.getNewPassword()));
         nativeLoginUser.changeLastUpdatedTime(LocalDateTime.now());
 
