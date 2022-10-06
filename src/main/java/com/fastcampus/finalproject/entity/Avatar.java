@@ -30,4 +30,16 @@ public class Avatar {
         this.type = type;
         this.background = background;
     }
+
+    public void changeAvatarName(String avatarName) {
+        this.name = avatarName;
+    }
+
+    public void changeTempAvatarTypeNotNull(String avatarType) {
+        this.type = avatarType;
+    }
+
+    public void changeTempBgNameNotNull(String bgName) {
+        this.background = bgName;
+    }
 }
