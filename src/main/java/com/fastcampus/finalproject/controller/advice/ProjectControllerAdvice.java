@@ -1,10 +1,20 @@
 package com.fastcampus.finalproject.controller.advice;
 
 import com.fastcampus.finalproject.controller.ProjectController;
+import com.fastcampus.finalproject.dto.ErrorResponseWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.NoSuchElementException;
+
+@Slf4j
 @RestControllerAdvice(assignableTypes = ProjectController.class)
 public class ProjectControllerAdvice {
 
-    //프로젝트 또는 영상이 5개인데 하나 더 생성하려 하면 에러 메시지 보낼 것
+    @ExceptionHandler
+    public ErrorResponseWrapper findProjectExHandle(NoSuchElementException e) {
+        return new ErrorResponseWrapper("프로젝트를 찾을 수 없습니다.", e.getMessage()).badRequest();
+    }
+
 }
