@@ -286,6 +286,8 @@ public class ProjectService {
     @Transactional
     public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         request.changeAudioInfo(findProject.getAudio());
     }
 
