@@ -1,6 +1,7 @@
 package com.fastcampus.finalproject.service;
 
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
+import com.fastcampus.finalproject.enums.FileType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class FlaskCommunicationService {
 
             HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
             ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestAudioApi());
-            writeLogAboutResponse(responseEntity);
+            writeLogAboutResponse(responseEntity, FileType.AUDIO);
 
             return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
         } catch (JsonProcessingException e) {
@@ -44,7 +45,7 @@ public class FlaskCommunicationService {
 
             HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
             ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestVideoApi());
-            writeLogAboutResponse(responseEntity);
+            writeLogAboutResponse(responseEntity, FileType.VIDEO);
 
             return objectMapper.readValue(responseEntity.getBody(), VideoResponse.class);
         } catch (JsonProcessingException e) {
@@ -74,8 +75,8 @@ public class FlaskCommunicationService {
                 String.class);
     }
 
-    private void writeLogAboutResponse(ResponseEntity<String> responseEntity) {
-        log.info("audio responseCode: {}", responseEntity.getStatusCode());
-        log.info("audio responseBody: {}", responseEntity.getBody());
+    private void writeLogAboutResponse(ResponseEntity<String> responseEntity, FileType fileType) {
+        log.info(fileType.getValue() + " responseCode: {}", responseEntity.getStatusCode());
+        log.info(fileType.getValue() + " responseBody: {}", responseEntity.getBody());
     }
 }

@@ -2,6 +2,7 @@ package com.fastcampus.finalproject.service;
 
 import com.fastcampus.finalproject.aws.S3Uploader;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
+import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.dto.request.*;
 import com.fastcampus.finalproject.dto.response.*;
 import com.fastcampus.finalproject.entity.Project;
@@ -13,6 +14,7 @@ import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.FileType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
+import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
 import com.fastcampus.finalproject.repository.*;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -94,6 +97,8 @@ public class ProjectService {
     @Transactional
     public UpdateProjectNameResponse changeProjectName(Long projectId, UpdateProjectNameRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         findProject.changeProjectName(request.getProjectName());
         return new UpdateProjectNameResponse(request.getProjectName());
     }
@@ -137,6 +142,8 @@ public class ProjectService {
     @Transactional
     public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         request.changeAudioInfo(findProject.getAudio());
 
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
@@ -164,8 +171,9 @@ public class ProjectService {
     @Transactional
     public void uploadAudioFile(Long projectId, AudioFileUploadRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
-        String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
+        validateAccessOnCurrentUser(findProject.getUser());
 
+        String saveName = saveUploadAudioFile(request.getAudioFile(), request.getAudioFileName(), UUID.randomUUID().toString());
         s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
 
         findProject.changeAudioFileName(saveName.substring(0, saveName.lastIndexOf(".")));
@@ -225,7 +233,10 @@ public class ProjectService {
     @Transactional
     public TextInputResponse getAudioFileAboutScript(Long projectId, TextInputRequest texts) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         findProject.getAudio().changeTexts(texts.getTexts());
+
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
         if (audioResponse.getStatus().equals("Success")) {
@@ -248,6 +259,8 @@ public class ProjectService {
     @Transactional
     public CompleteAvatarPageResponse addAvatarInfo(Long projectId, AvatarPageRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
         //영상 합성
@@ -276,6 +289,8 @@ public class ProjectService {
     @Transactional
     public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         request.changeAudioInfo(findProject.getAudio());
     }
 
@@ -284,8 +299,9 @@ public class ProjectService {
      * */
     @Transactional
     public void addTempAvatarInfo(Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findById(projectId)
-                .orElseThrow(NoSuchElementException::new);
+        Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         findProject.getAvatar().changeAvatarName(request.getAvatarName());
         getTempAvatarInfoOrBlank(request, findProject);
     }
@@ -304,8 +320,8 @@ public class ProjectService {
      */
     @Transactional(readOnly = true)
     public GetTextPageResponse getTextPageData(Long projectId) {
-        Project findProject = projectRepository.findById(projectId)
-                .orElseThrow(NoSuchElementException::new);
+        Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
 
         List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
                 .map(String::trim)
@@ -344,8 +360,8 @@ public class ProjectService {
      */
     @Transactional(readOnly = true)
     public GetAvatarPageResponse getAvatarPageData(Long projectId) {
-        Project findProject = projectRepository.findById(projectId)
-                .orElseThrow(NoSuchElementException::new);
+        Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
 
         List<AvatarSelectionDto> avatarDtoList = getAvatarDtoList();
         List<BackgroundDto> backgroundDtoList = dummyBackgroundRepository.findAll().stream()
@@ -391,6 +407,12 @@ public class ProjectService {
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
         return new AvatarPreviewResponse(base64String);
+    }
+
+    private void validateAccessOnCurrentUser(UserBasic user) {
+        if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
+            throw new NoCorrectProjectAccessException();
+        }
     }
 
     private String getFilePath(String id) {
