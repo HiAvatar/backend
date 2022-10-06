@@ -24,6 +24,7 @@ import io.jsonwebtoken.security.SecurityException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,7 +68,7 @@ public class UserController {
     }
 
     @PostMapping("/my-page")
-    public ResponseWrapper changePassword(@Valid NewPasswordDto newPasswordDto) {
+    public ResponseWrapper changePassword(@RequestBody @Valid NewPasswordDto newPasswordDto) {
         Long userId = AuthUtil.getCurrentUserUid();
         userService.changePassword(userId, newPasswordDto);
 
