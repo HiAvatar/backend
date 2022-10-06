@@ -270,10 +270,33 @@ public class ProjectService {
         }
     }
 
+    /**
+     * 텍스트 페이지 임시 저장
+     * */
     @Transactional
     public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         request.changeAudioInfo(findProject.getAudio());
+    }
+
+    /**
+     * 아바타 페이지 임시 저장
+     * */
+    @Transactional
+    public void addTempAvatarInfo(Long projectId, AvatarPageRequest request) {
+        Project findProject = projectRepository.findById(projectId)
+                .orElseThrow(NoSuchElementException::new);
+        findProject.getAvatar().changeAvatarName(request.getAvatarName());
+        getTempAvatarInfoOrBlank(request, findProject);
+    }
+
+    private void getTempAvatarInfoOrBlank(AvatarPageRequest request, Project findProject) {
+        if (!(request.getAvatarType().isBlank())) {
+            findProject.getAvatar().changeTempAvatarTypeNotNull(request.getAvatarType());
+        }
+        if (!(request.getBgName().isBlank())) {
+            findProject.getAvatar().changeTempBgNameNotNull(request.getBgName());
+        }
     }
 
     /**
