@@ -26,6 +26,9 @@ spring:
     host: localHost
     port: 6379
 
+  jackson:
+    time-zone: Asia/Seoul
+
 logging:
   level:
     org.hibernate.SQL: debug # dml 쿼리에 대해 debug 이상의 로그 출력
