@@ -35,4 +35,10 @@ public class ErrorResponseWrapper {
         this.status = HttpStatus.FORBIDDEN.getReasonPhrase();
         return this;
     }
+
+    public ErrorResponseWrapper internalServerError() {
+        this.code = HttpStatus.INTERNAL_SERVER_ERROR.value();
+        this.status = HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase();
+        return this;
+    }
 }
