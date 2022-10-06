@@ -6,7 +6,8 @@ public enum ProjectDefaultType {
     LANGUAGE("한국어"),
     SEX("여자"),
     CHARACTER_VOICE("가영"),
-    BACKGROUND("배경0");
+    BACKGROUND("배경0"),
+    AVATAR_NAME("avatar1");
 
     private final String value;
 

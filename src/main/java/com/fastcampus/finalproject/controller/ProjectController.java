@@ -90,6 +90,13 @@ public class ProjectController {
                 .ok();
     }
 
+    @PatchMapping("/projects/{projectId}/avatar")
+    public ResponseWrapper<Void> addTempAvatarInfo(@PathVariable Long projectId, @RequestBody AvatarPageRequest request) {
+        projectService.addTempAvatarInfo(projectId, request);
+        return new ResponseWrapper<Void>()
+                .ok();
+    }
+
     @GetMapping("/projects/{projectId}/save")
     public ResponseWrapper<GetTextPageResponse> getTextPage(@PathVariable Long projectId) {
         return new ResponseWrapper<>(projectService.getTextPageData(projectId))
