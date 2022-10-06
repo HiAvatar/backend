@@ -1,9 +1,11 @@
 package com.fastcampus.finalproject.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponseWrapper {
 
     private int code;
@@ -19,8 +21,6 @@ public class ErrorResponseWrapper {
     public ErrorResponseWrapper badRequest() {
         this.code = HttpStatus.BAD_REQUEST.value();
         this.status = HttpStatus.BAD_REQUEST.getReasonPhrase();
-        this.error = error;
-        this.message = message;
         return this;
     }
 

@@ -14,7 +14,7 @@ public class ProjectControllerAdvice {
 
     @ExceptionHandler
     public ErrorResponseWrapper findProjectExHandle(NoSuchElementException e) {
-        return new ErrorResponseWrapper("프로젝트를 찾을 수 없습니다.", e.getMessage()).badRequest();
+        return new ErrorResponseWrapper(null, "프로젝트를 찾을 수 없습니다.").badRequest();
     }
 
 }
