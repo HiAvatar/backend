@@ -101,4 +101,17 @@ public class RefreshTokenUtility implements InitializingBean {
         String subject = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
         return Long.valueOf(subject);
     }
+
+    public TokenValidityCode evaluateTokenValidity(String token) {
+        TokenValidityCode result;
+        try {
+            validateToken(token);
+            result = TokenValidityCode.VALID;
+        } catch (ExpiredJwtException exception) {
+            result = TokenValidityCode.EXPIRED;
+        } catch (Exception exception) {
+            result = TokenValidityCode.INVALID;
+        }
+        return result;
+    }
 }

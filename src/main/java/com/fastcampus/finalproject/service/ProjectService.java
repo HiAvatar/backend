@@ -271,6 +271,15 @@ public class ProjectService {
     }
 
     /**
+     * 텍스트 페이지 임시 저장
+     * */
+    @Transactional
+    public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
+        Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
+        request.changeAudioInfo(findProject.getAudio());
+    }
+
+    /**
      * 아바타 페이지 임시 저장
      * */
     @Transactional

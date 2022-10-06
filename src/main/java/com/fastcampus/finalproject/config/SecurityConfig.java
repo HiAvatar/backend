@@ -83,6 +83,7 @@ public class SecurityConfig {
         httpSecurity
                 .authorizeRequests()
                 .antMatchers("/sign-up", "/sign-up/**").permitAll()
+                .antMatchers("/token/refresh").permitAll()
                 .antMatchers("/login").permitAll()
                 .anyRequest().authenticated();
 

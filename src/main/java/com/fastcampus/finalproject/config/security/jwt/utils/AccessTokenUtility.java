@@ -79,5 +79,18 @@ public class AccessTokenUtility implements InitializingBean {
         Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
         return true;
     }
+
+    public TokenValidityCode evaluateTokenValidity(String token) {
+        TokenValidityCode result;
+        try {
+            validateToken(token);
+            result = TokenValidityCode.VALID;
+        } catch (ExpiredJwtException exception) {
+            result = TokenValidityCode.EXPIRED;
+        } catch (Exception exception) {
+            result = TokenValidityCode.INVALID;
+        }
+        return result;
+    }
 }
 

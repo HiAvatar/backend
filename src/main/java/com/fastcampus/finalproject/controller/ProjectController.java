@@ -90,6 +90,19 @@ public class ProjectController {
                 .ok();
     }
 
+    /**
+     * 텍스트 페이지 임시 저장
+     * */
+    @PatchMapping("/projects/{projectId}/save")
+    public ResponseWrapper<Void> saveTextPageAudioInfo(@PathVariable Long projectId, @RequestBody TotalAudioSyntheticRequest request) {
+        projectService.saveAudioInfo(projectId, request);
+        return new ResponseWrapper<Void>()
+                .ok();
+    }
+
+    /**
+     * 아바타 페이지 임시 저장
+     * */
     @PatchMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<Void> addTempAvatarInfo(@PathVariable Long projectId, @RequestBody AvatarPageRequest request) {
         projectService.addTempAvatarInfo(projectId, request);
