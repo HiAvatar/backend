@@ -299,8 +299,9 @@ public class ProjectService {
      * */
     @Transactional
     public void addTempAvatarInfo(Long projectId, AvatarPageRequest request) {
-        Project findProject = projectRepository.findById(projectId)
-                .orElseThrow(NoSuchElementException::new);
+        Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
+        validateAccessOnCurrentUser(findProject.getUser());
+
         findProject.getAvatar().changeAvatarName(request.getAvatarName());
         getTempAvatarInfoOrBlank(request, findProject);
     }
