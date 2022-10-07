@@ -14,24 +14,17 @@ import java.time.ZonedDateTime;
 @Getter
 public class BaseTimeEntity {
 
-//    @CreatedDate
-//    @Column(updatable = false, nullable = false)
-//    private LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-//
-//    @LastModifiedDate
-//    @Column(nullable = false)
-//    private LocalDateTime lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
     private ZonedDateTime createdAt;
     private ZonedDateTime lastModifiedAt;
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        this.lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.createdAt = ZonedDateTime.now();
+        this.lastModifiedAt = ZonedDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.lastModifiedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.lastModifiedAt = ZonedDateTime.now();
     }
 }
