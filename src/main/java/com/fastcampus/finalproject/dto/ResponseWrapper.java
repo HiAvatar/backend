@@ -32,10 +32,4 @@ public class ResponseWrapper<T>{
         return this;
     }
 
-    public ResponseWrapper<T> fail() {
-        this.code = INTERNAL_SERVER_ERROR.value();
-        this.status = INTERNAL_SERVER_ERROR.getReasonPhrase();
-        return this;
-    }
-
 }
