@@ -3,6 +3,7 @@ package com.fastcampus.finalproject.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 /**
@@ -30,4 +31,5 @@ public class ResponseWrapper<T>{
         this.status = OK.getReasonPhrase();
         return this;
     }
+
 }
