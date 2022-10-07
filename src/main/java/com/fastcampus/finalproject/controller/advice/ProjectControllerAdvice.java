@@ -39,11 +39,11 @@ public class ProjectControllerAdvice {
     /**
      * 특정 파일을 찾을 수 없을 때 발생하는 예외 처리
      * */
-    @ExceptionHandler
-    public ErrorResponseWrapper findAudioFileExHandle(FileNotFoundException e) {
-        return new ErrorResponseWrapper(e.getMessage(), "해당 경로에 파일이 존재하지 않습니다.")
-                .internalServerError();
-    }
+//    @ExceptionHandler
+//    public ErrorResponseWrapper findAudioFileExHandle(FileNotFoundException e) {
+//        return new ErrorResponseWrapper(e.getMessage(), "해당 경로에 파일이 존재하지 않습니다.")
+//                .internalServerError();
+//    }
 
 
 }
