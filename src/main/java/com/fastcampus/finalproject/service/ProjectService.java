@@ -270,6 +270,7 @@ public class ProjectService {
 
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+            log.info("filename = {}, filePath = {}", file.getName(), file.getAbsolutePath());
             String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.VIDEO, findProject);
 
             Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(0, file.getName().lastIndexOf(".")), savedFileBucketUrl, findProject.getUser()));
