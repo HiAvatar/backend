@@ -266,13 +266,13 @@ public class ProjectService {
 
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
+            log.info("filename = {}, filePath = {}", file.getName(), file.getAbsolutePath());
             String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.VIDEO, findProject);
-
-            //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
-            s3Uploader.removeLocalFile(file);
 
             Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(0, file.getName().lastIndexOf(".")), savedFileBucketUrl, findProject.getUser()));
 
+            //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
+            s3Uploader.removeLocalFile(file);
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
             return new CompleteAvatarPageResponse("Failed");
