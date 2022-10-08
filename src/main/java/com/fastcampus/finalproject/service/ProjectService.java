@@ -217,8 +217,8 @@ public class ProjectService {
         byte[] data = new byte[(int) file.length()];
         try (FileInputStream stream = new FileInputStream(file)) {
             stream.read(data, 0, data.length);
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException("음성 파일을 읽어들일 수 없습니다.");
         }
         return data;
     }
