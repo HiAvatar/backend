@@ -182,17 +182,13 @@ public class ProjectService {
 
     private String saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
         byte[] decode = Base64.getDecoder().decode(String.valueOf(audioFileBase64));
-        FileOutputStream fos;
         File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
-
-        try {
-            fos = new FileOutputStream(target);
+        try (FileOutputStream fos = new FileOutputStream(target)){
             fos.write(decode);
             fos.close();
-
             return uuid + "_" + audioFileName;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("업로드된 음성 파일을 생성하지 못했습니다.");
         }
     }
 
