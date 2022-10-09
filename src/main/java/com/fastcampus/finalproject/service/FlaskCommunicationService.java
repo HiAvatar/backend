@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.service;
 
+import com.fastcampus.finalproject.config.RestTemplateConfig;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
 import com.fastcampus.finalproject.enums.FileType;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,6 +25,7 @@ public class FlaskCommunicationService {
 
     private final ObjectMapper objectMapper;
     private final YmlFlaskConfig flaskConfig;
+    private final RestTemplateConfig restTemplateConfig;
 
     public AudioResponse getAudioResult(AudioRequest request) {
         try {
@@ -67,8 +69,7 @@ public class FlaskCommunicationService {
 
     private ResponseEntity<String> getResponseEntity(HttpEntity<String> entity, String requestApi) {
         //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.exchange(
+        return restTemplateConfig.restTemplate().exchange(
                 requestApi,
                 HttpMethod.POST,
                 entity,
