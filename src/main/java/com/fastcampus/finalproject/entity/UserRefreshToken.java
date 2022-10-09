@@ -3,7 +3,7 @@ package com.fastcampus.finalproject.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-@RedisHash(timeToLive = 86400 * 24)
+@RedisHash(timeToLive = 86400)
 public class UserRefreshToken {
 
     private Long uid;
