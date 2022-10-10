@@ -17,6 +17,7 @@ import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
 import com.fastcampus.finalproject.exception.NoGetAudioFileBinaryException;
 import com.fastcampus.finalproject.exception.NoCreateUploadAudioFileException;
+import com.fastcampus.finalproject.exception.NotSameSizeTwoListsException;
 import com.fastcampus.finalproject.repository.*;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.RequiredArgsConstructor;
@@ -114,27 +115,12 @@ public class ProjectService {
                 .map(ProjectDto::new)
                 .collect(Collectors.toList());
 
-        List<Video> videos = videoRepository.findAllByUserUid(userUid);
-
-        deleteOldestVideo(videos);
-
-        List<VideoDto> videoDtos = videos.stream()
+        List<VideoDto> videoDtos = videoRepository.findAllByUserUid(userUid)
+                .stream()
                 .map(VideoDto::new)
                 .collect(Collectors.toList());
 
         return new GetHistoryResponse(projectDtos, videoDtos);
-    }
-
-    private void deleteOldestVideo(List<Video> videos) {
-        if (videos.size() > 5) {
-            Video removeVideo = videos.get(videos.size() - 1);
-            log.info("삭제된 영상 id = {}", removeVideo.getId());
-            videoRepository.delete(removeVideo);
-            videos.remove(videos.size() - 1);
-
-            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
-            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
-        }
     }
 
     /**
@@ -144,6 +130,7 @@ public class ProjectService {
     public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         validateAccessOnCurrentUser(findProject.getUser());
+        validateSameTextsAndSplitTextList(request);
 
         request.changeAudioInfo(findProject.getAudio());
 
@@ -152,18 +139,33 @@ public class ProjectService {
         );
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-
-            //기존 파일 삭제시키기 (s3, local)
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
         } else {
             return new TotalAudioSyntheticResponse("Failed", null);
         }
+    }
+
+    private void validateSameTextsAndSplitTextList(TotalAudioSyntheticRequest request) {
+        List<String> textList = Stream.of(request.getTexts().split("\\."))
+                .map(String::trim)
+                .collect(Collectors.toList());
+
+        if(textList.size() != request.getSplitTextList().size()) {
+            throw new NotSameSizeTwoListsException();
+        }
+    }
+
+    private String saveAudioFileToS3(Project findProject, String audioId) {
+        File file = new File(flaskConfig.createAudioFilePath(audioId)); //로컬에 있는 파일 찾기
+        String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
+
+        //기존 파일 삭제시키기 (s3, local)
+        s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
+
+        findProject.changeAudioFileName(audioId);
+        findProject.changeTotalAudioURl(savedFileBucketUrl);
+        return savedFileBucketUrl;
     }
 
     /**
@@ -237,13 +239,7 @@ public class ProjectService {
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
-
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
         } else {
             return new TextInputResponse(audioResponse.getStatus());
@@ -274,9 +270,25 @@ public class ProjectService {
 
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
             s3Uploader.removeLocalFile(file);
+
+            deleteOldestVideo(findProject.getUser().getUid());
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
             return new CompleteAvatarPageResponse("Failed");
+        }
+    }
+
+    private void deleteOldestVideo(Long userUid) {
+        List<Video> videos = videoRepository.findAllByUserUid(userUid);
+
+        if (videos.size() > 5) {
+            Video removeVideo = videos.get(videos.size() - 1);
+            log.info("삭제된 영상 id = {}", removeVideo.getId());
+            videoRepository.delete(removeVideo);
+            videos.remove(videos.size() - 1);
+
+            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
+            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
         }
     }
 
@@ -320,6 +332,13 @@ public class ProjectService {
         Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
         validateAccessOnCurrentUser(findProject.getUser());
 
+        List<TextDto> splitTextList = getSplitTextDtos(findProject);
+        TextPageDummyDto dummyData = getTextPageDummyDto();
+
+        return new GetTextPageResponse(findProject, splitTextList, dummyData);
+    }
+
+    private List<TextDto> getSplitTextDtos(Project findProject) {
         List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
                 .map(String::trim)
                 .collect(Collectors.toList());
@@ -332,7 +351,10 @@ public class ProjectService {
         for (int i = 0; i < textList.size(); i++) {
             splitTextList.add(new TextDto(i + 1, textList.get(i), sentenceSpacingList.get(i)));
         }
+        return splitTextList;
+    }
 
+    private TextPageDummyDto getTextPageDummyDto() {
         List<DummyVoice> koreanList = dummyVoiceRepository.findAllByLanguage(KOREAN.getValue());
         List<DummyVoice> englishList = dummyVoiceRepository.findAllByLanguage(ENGLISH.getValue());
         List<DummyVoice> chineseList = dummyVoiceRepository.findAllByLanguage(CHINESE.getValue());
@@ -341,9 +363,7 @@ public class ProjectService {
         EnglishDto english = new EnglishDto(getGenderList(englishList, FEMALE), getGenderList(englishList, MALE));
         ChineseDto chinese = new ChineseDto(getGenderList(chineseList, FEMALE), getGenderList(chineseList, MALE));
 
-        TextPageDummyDto dummyData = new TextPageDummyDto(korean, english, chinese);
-
-        return new GetTextPageResponse(findProject, splitTextList, dummyData);
+        return new TextPageDummyDto(korean, english, chinese);
     }
 
     private List<CharacterDto> getGenderList(List<DummyVoice> list, SexType type) {
@@ -410,10 +430,6 @@ public class ProjectService {
         if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
             throw new NoCorrectProjectAccessException();
         }
-    }
-
-    private String getFilePath(String id) {
-        return flaskConfig.createAudioFilePath(id);
     }
 
     private String getSavedFileBucketUrl(File file, FileType fileType, Project project) {
