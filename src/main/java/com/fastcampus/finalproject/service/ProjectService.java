@@ -128,6 +128,7 @@ public class ProjectService {
     public TotalAudioSyntheticResponse addAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
         validateAccessOnCurrentUser(findProject.getUser());
+        validateSameTextsAndSplitTextList(request);
 
         request.changeAudioInfo(findProject.getAudio());
 
@@ -140,6 +141,16 @@ public class ProjectService {
             return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
         } else {
             return new TotalAudioSyntheticResponse("Failed", null);
+        }
+    }
+
+    private void validateSameTextsAndSplitTextList(TotalAudioSyntheticRequest request) {
+        List<String> textList = Stream.of(request.getTexts().split("\\."))
+                .map(String::trim)
+                .collect(Collectors.toList());
+
+        if(textList.size() != request.getSplitTextList().size()) {
+            throw new NotSameSizeTwoListsException();
         }
     }
 
@@ -337,10 +348,6 @@ public class ProjectService {
         List<Integer> sentenceSpacingList = Stream.of(findProject.getAudio().getSentenceSpacingList().split("\\|"))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
-
-        if(textList.size() != sentenceSpacingList.size()) {
-            throw new NotSameSizeTwoListsException();
-        }
 
         List<TextDto> splitTextList = new ArrayList<>();
         for (int i = 0; i < textList.size(); i++) {
