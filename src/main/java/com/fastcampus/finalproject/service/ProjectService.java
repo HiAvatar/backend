@@ -15,6 +15,8 @@ import com.fastcampus.finalproject.enums.FileType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
+import com.fastcampus.finalproject.exception.NoGetAudioFileBinaryException;
+import com.fastcampus.finalproject.exception.NoCreateUploadAudioFileException;
 import com.fastcampus.finalproject.exception.NotSameSizeTwoListsException;
 import com.fastcampus.finalproject.repository.*;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
@@ -183,17 +185,13 @@ public class ProjectService {
 
     private String saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
         byte[] decode = Base64.getDecoder().decode(String.valueOf(audioFileBase64));
-        FileOutputStream fos;
         File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
-
-        try {
-            fos = new FileOutputStream(target);
+        try (FileOutputStream fos = new FileOutputStream(target)){
             fos.write(decode);
             fos.close();
-
             return uuid + "_" + audioFileName;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new NoCreateUploadAudioFileException(e);
         }
     }
 
@@ -222,8 +220,8 @@ public class ProjectService {
         byte[] data = new byte[(int) file.length()];
         try (FileInputStream stream = new FileInputStream(file)) {
             stream.read(data, 0, data.length);
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new NoGetAudioFileBinaryException(e);
         }
         return data;
     }
