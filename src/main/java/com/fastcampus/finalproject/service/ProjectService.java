@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -113,27 +112,12 @@ public class ProjectService {
                 .map(ProjectDto::new)
                 .collect(Collectors.toList());
 
-        List<Video> videos = videoRepository.findAllByUserUid(userUid);
-
-        deleteOldestVideo(videos);
-
-        List<VideoDto> videoDtos = videos.stream()
+        List<VideoDto> videoDtos = videoRepository.findAllByUserUid(userUid)
+                .stream()
                 .map(VideoDto::new)
                 .collect(Collectors.toList());
 
         return new GetHistoryResponse(projectDtos, videoDtos);
-    }
-
-    private void deleteOldestVideo(List<Video> videos) {
-        if (videos.size() > 5) {
-            Video removeVideo = videos.get(videos.size() - 1);
-            log.info("삭제된 영상 id = {}", removeVideo.getId());
-            videoRepository.delete(removeVideo);
-            videos.remove(videos.size() - 1);
-
-            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
-            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
-        }
     }
 
     /**
@@ -151,18 +135,23 @@ public class ProjectService {
         );
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-
-            //기존 파일 삭제시키기 (s3, local)
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
         } else {
             return new TotalAudioSyntheticResponse("Failed", null);
         }
+    }
+
+    private String saveAudioFileToS3(Project findProject, String audioId) {
+        File file = new File(flaskConfig.createAudioFilePath(audioId)); //로컬에 있는 파일 찾기
+        String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
+
+        //기존 파일 삭제시키기 (s3, local)
+        s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
+
+        findProject.changeAudioFileName(audioId);
+        findProject.changeTotalAudioURl(savedFileBucketUrl);
+        return savedFileBucketUrl;
     }
 
     /**
@@ -240,13 +229,7 @@ public class ProjectService {
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
-
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
         } else {
             return new TextInputResponse(audioResponse.getStatus());
@@ -277,9 +260,25 @@ public class ProjectService {
 
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
             s3Uploader.removeLocalFile(file);
+
+            deleteOldestVideo(findProject.getUser().getUid());
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
             return new CompleteAvatarPageResponse("Failed");
+        }
+    }
+
+    private void deleteOldestVideo(Long userUid) {
+        List<Video> videos = videoRepository.findAllByUserUid(userUid);
+
+        if (videos.size() > 5) {
+            Video removeVideo = videos.get(videos.size() - 1);
+            log.info("삭제된 영상 id = {}", removeVideo.getId());
+            videoRepository.delete(removeVideo);
+            videos.remove(videos.size() - 1);
+
+            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
+            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
         }
     }
 
@@ -413,10 +412,6 @@ public class ProjectService {
         if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
             throw new NoCorrectProjectAccessException();
         }
-    }
-
-    private String getFilePath(String id) {
-        return flaskConfig.createAudioFilePath(id);
     }
 
     private String getSavedFileBucketUrl(File file, FileType fileType, Project project) {
