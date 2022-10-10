@@ -135,18 +135,23 @@ public class ProjectService {
         );
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-
-            //기존 파일 삭제시키기 (s3, local)
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
         } else {
             return new TotalAudioSyntheticResponse("Failed", null);
         }
+    }
+
+    private String saveAudioFileToS3(Project findProject, String audioId) {
+        File file = new File(flaskConfig.createAudioFilePath(audioId)); //로컬에 있는 파일 찾기
+        String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
+
+        //기존 파일 삭제시키기 (s3, local)
+        s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
+
+        findProject.changeAudioFileName(audioId);
+        findProject.changeTotalAudioURl(savedFileBucketUrl);
+        return savedFileBucketUrl;
     }
 
     /**
@@ -224,13 +229,7 @@ public class ProjectService {
         AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
 
         if (audioResponse.getStatus().equals("Success")) {
-            File file = new File(getFilePath(audioResponse.getId())); //로컬에 있는 파일 찾기
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.AUDIO, findProject); //s3 연동 -> url 반환
-            s3Uploader.removeFile(beMappedS3AudioPath(findProject), FileType.AUDIO, findProject.getAudioFileName(), flaskConfig.getAudioExtension());
-
-            findProject.changeAudioFileName(audioResponse.getId());
-            findProject.changeTotalAudioURl(savedFileBucketUrl);
-
+            String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
         } else {
             return new TextInputResponse(audioResponse.getStatus());
@@ -413,10 +412,6 @@ public class ProjectService {
         if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
             throw new NoCorrectProjectAccessException();
         }
-    }
-
-    private String getFilePath(String id) {
-        return flaskConfig.createAudioFilePath(id);
     }
 
     private String getSavedFileBucketUrl(File file, FileType fileType, Project project) {
