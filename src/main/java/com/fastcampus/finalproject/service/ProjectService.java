@@ -338,6 +338,10 @@ public class ProjectService {
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
 
+        if(textList.size() != sentenceSpacingList.size()) {
+            throw new NotSameSizeTwoListsException();
+        }
+
         List<TextDto> splitTextList = new ArrayList<>();
         for (int i = 0; i < textList.size(); i++) {
             splitTextList.add(new TextDto(i + 1, textList.get(i), sentenceSpacingList.get(i)));
