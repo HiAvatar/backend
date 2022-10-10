@@ -15,6 +15,8 @@ import com.fastcampus.finalproject.enums.FileType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
+import com.fastcampus.finalproject.exception.NoGetAudioFileBinaryException;
+import com.fastcampus.finalproject.exception.NoCreateUploadAudioFileException;
 import com.fastcampus.finalproject.repository.*;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -188,7 +189,7 @@ public class ProjectService {
             fos.close();
             return uuid + "_" + audioFileName;
         } catch (IOException e) {
-            throw new RuntimeException("업로드된 음성 파일을 생성하지 못했습니다.");
+            throw new NoCreateUploadAudioFileException(e);
         }
     }
 
@@ -218,7 +219,7 @@ public class ProjectService {
         try (FileInputStream stream = new FileInputStream(file)) {
             stream.read(data, 0, data.length);
         } catch (IOException e) {
-            throw new RuntimeException("음성 파일을 읽어들일 수 없습니다.");
+            throw new NoGetAudioFileBinaryException(e);
         }
         return data;
     }
