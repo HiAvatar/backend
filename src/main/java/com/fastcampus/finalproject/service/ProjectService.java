@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -115,25 +114,11 @@ public class ProjectService {
 
         List<Video> videos = videoRepository.findAllByUserUid(userUid);
 
-        deleteOldestVideo(videos);
-
         List<VideoDto> videoDtos = videos.stream()
                 .map(VideoDto::new)
                 .collect(Collectors.toList());
 
         return new GetHistoryResponse(projectDtos, videoDtos);
-    }
-
-    private void deleteOldestVideo(List<Video> videos) {
-        if (videos.size() > 5) {
-            Video removeVideo = videos.get(videos.size() - 1);
-            log.info("삭제된 영상 id = {}", removeVideo.getId());
-            videoRepository.delete(removeVideo);
-            videos.remove(videos.size() - 1);
-
-            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
-            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
-        }
     }
 
     /**
@@ -277,9 +262,25 @@ public class ProjectService {
 
             //비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
             s3Uploader.removeLocalFile(file);
+
+            deleteOldestVideo(findProject.getUser().getUid());
             return new CompleteAvatarPageResponse("Success", savedVideo);
         } else {
             return new CompleteAvatarPageResponse("Failed");
+        }
+    }
+
+    private void deleteOldestVideo(Long userUid) {
+        List<Video> videos = videoRepository.findAllByUserUid(userUid);
+
+        if (videos.size() > 5) {
+            Video removeVideo = videos.get(videos.size() - 1);
+            log.info("삭제된 영상 id = {}", removeVideo.getId());
+            videoRepository.delete(removeVideo);
+            videos.remove(videos.size() - 1);
+
+            //비디오가 삭제되면 s3의 프로젝트 폴더에서 해당 video 삭제
+            s3Uploader.removeFile(beMappedS3VideoPath(removeVideo.getUser()), FileType.VIDEO, removeVideo.getVideoFileName(), flaskConfig.getVideoExtension());
         }
     }
 
