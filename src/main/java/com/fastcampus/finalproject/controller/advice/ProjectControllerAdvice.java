@@ -38,7 +38,7 @@ public class ProjectControllerAdvice {
      * flask 서버와 통신하면서 발생하는 예외 처리
      */
     @ExceptionHandler
-    public ErrorResponseWrapper test(RestClientException e) {
+    public ErrorResponseWrapper flaskInternalError(RestClientException e) {
         return new ErrorResponseWrapper(e.getMessage(), "flask 서버의 내부 오류로 인해 요청이 실패했습니다.")
                 .internalServerError();
     }
