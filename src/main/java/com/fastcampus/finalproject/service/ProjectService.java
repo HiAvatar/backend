@@ -112,9 +112,8 @@ public class ProjectService {
                 .map(ProjectDto::new)
                 .collect(Collectors.toList());
 
-        List<Video> videos = videoRepository.findAllByUserUid(userUid);
-
-        List<VideoDto> videoDtos = videos.stream()
+        List<VideoDto> videoDtos = videoRepository.findAllByUserUid(userUid)
+                .stream()
                 .map(VideoDto::new)
                 .collect(Collectors.toList());
 
