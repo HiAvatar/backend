@@ -15,6 +15,7 @@ import com.fastcampus.finalproject.enums.FileType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
+import com.fastcampus.finalproject.exception.NotSameSizeTwoListsException;
 import com.fastcampus.finalproject.repository.*;
 import com.fastcampus.finalproject.util.CustomTimeUtil;
 import lombok.RequiredArgsConstructor;
@@ -322,6 +323,13 @@ public class ProjectService {
         Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
         validateAccessOnCurrentUser(findProject.getUser());
 
+        List<TextDto> splitTextList = getSplitTextDtos(findProject);
+        TextPageDummyDto dummyData = getTextPageDummyDto();
+
+        return new GetTextPageResponse(findProject, splitTextList, dummyData);
+    }
+
+    private List<TextDto> getSplitTextDtos(Project findProject) {
         List<String> textList = Stream.of(findProject.getAudio().getTexts().split("\\."))
                 .map(String::trim)
                 .collect(Collectors.toList());
@@ -330,11 +338,18 @@ public class ProjectService {
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
 
+        if(textList.size() != sentenceSpacingList.size()) {
+            throw new NotSameSizeTwoListsException();
+        }
+
         List<TextDto> splitTextList = new ArrayList<>();
         for (int i = 0; i < textList.size(); i++) {
             splitTextList.add(new TextDto(i + 1, textList.get(i), sentenceSpacingList.get(i)));
         }
+        return splitTextList;
+    }
 
+    private TextPageDummyDto getTextPageDummyDto() {
         List<DummyVoice> koreanList = dummyVoiceRepository.findAllByLanguage(KOREAN.getValue());
         List<DummyVoice> englishList = dummyVoiceRepository.findAllByLanguage(ENGLISH.getValue());
         List<DummyVoice> chineseList = dummyVoiceRepository.findAllByLanguage(CHINESE.getValue());
@@ -343,9 +358,7 @@ public class ProjectService {
         EnglishDto english = new EnglishDto(getGenderList(englishList, FEMALE), getGenderList(englishList, MALE));
         ChineseDto chinese = new ChineseDto(getGenderList(chineseList, FEMALE), getGenderList(chineseList, MALE));
 
-        TextPageDummyDto dummyData = new TextPageDummyDto(korean, english, chinese);
-
-        return new GetTextPageResponse(findProject, splitTextList, dummyData);
+        return new TextPageDummyDto(korean, english, chinese);
     }
 
     private List<CharacterDto> getGenderList(List<DummyVoice> list, SexType type) {
