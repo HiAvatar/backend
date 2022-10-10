@@ -3,12 +3,13 @@ package com.fastcampus.finalproject.controller.advice;
 import com.fastcampus.finalproject.controller.ProjectController;
 import com.fastcampus.finalproject.dto.ErrorResponseWrapper;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
+import com.fastcampus.finalproject.exception.NoGetAudioFileBinaryException;
+import com.fastcampus.finalproject.exception.NoCreateUploadAudioFileException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.RestClientException;
 
-import java.io.FileNotFoundException;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -37,13 +38,21 @@ public class ProjectControllerAdvice {
     }
 
     /**
-     * 특정 파일을 찾을 수 없을 때 발생하는 예외 처리
+     * 업로드된 음성 파일을 생성할 때 발생하는 예외 처리
      * */
-//    @ExceptionHandler
-//    public ErrorResponseWrapper findAudioFileExHandle(FileNotFoundException e) {
-//        return new ErrorResponseWrapper(e.getMessage(), "해당 경로에 파일이 존재하지 않습니다.")
-//                .internalServerError();
-//    }
+    @ExceptionHandler
+    public ErrorResponseWrapper saveAudioFileExHandle(NoCreateUploadAudioFileException e) {
+        return new ErrorResponseWrapper(e.getMessage(), "업로드된 파일을 생성하지 못했습니다.")
+                .internalServerError();
+    }
 
+    /**
+     * 생성된 파일을 Binary 타입으로 변환할 때 생기는 예외 처리
+     * */
+    @ExceptionHandler
+    public ErrorResponseWrapper getAudioFileBinaryExHandle(NoGetAudioFileBinaryException e) {
+        return new ErrorResponseWrapper(e.getMessage(), "생성된 파일을 읽어들이지 못했습니다.")
+                .internalServerError();
+    }
 
 }
