@@ -28,6 +28,7 @@ public class AvatarPageDto {
         private String result;
         private Long videoId;
         private String videoName;
+        private String videoUrl;
         private String createdAt;
 
         public CompleteAvatarPageResponse(String result) {
@@ -38,6 +39,7 @@ public class AvatarPageDto {
             this.result = result;
             this.videoId = video.getId();
             this.videoName = video.getName();
+            this.videoUrl = video.getVideoUrl();
             this.createdAt = CustomTimeUtil.convertDateTime(video.getCreatedAt());
         }
     }
