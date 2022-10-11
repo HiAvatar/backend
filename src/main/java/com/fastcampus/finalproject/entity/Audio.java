@@ -1,6 +1,5 @@
 package com.fastcampus.finalproject.entity;
 
-import com.fastcampus.finalproject.dto.request.TotalAudioSyntheticRequest;
 import lombok.Getter;
 
 import javax.persistence.Column;
