@@ -17,7 +17,7 @@ import com.fastcampus.finalproject.exception.token.AccessTokenStillValidExceptio
 import com.fastcampus.finalproject.exception.DuplicateIdException;
 import com.fastcampus.finalproject.exception.token.RefreshTokenInvalidException;
 import com.fastcampus.finalproject.repository.NativeLoginUserRepository;
-import com.fastcampus.finalproject.repository.RefreshTokenRepository;
+import com.fastcampus.finalproject.repository.RedisRefreshTokenRepository;
 import com.fastcampus.finalproject.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,16 +36,16 @@ public class UserService {
     private final NativeLoginUserRepository nativeLoginUserRepository;
     private final AccessTokenUtility accessTokenUtility;
     private final RefreshTokenUtility refreshTokenUtility;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisRefreshTokenRepository redisRefreshTokenRepository;
 
 
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository, NativeLoginUserRepository nativeLoginUserRepository, AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility, RefreshTokenRepository refreshTokenRepository) {
+    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository, NativeLoginUserRepository nativeLoginUserRepository, AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility, RedisRefreshTokenRepository redisRefreshTokenRepository) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.userRepository = userRepository;
         this.nativeLoginUserRepository = nativeLoginUserRepository;
         this.accessTokenUtility = accessTokenUtility;
         this.refreshTokenUtility = refreshTokenUtility;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.redisRefreshTokenRepository = redisRefreshTokenRepository;
     }
 
     public SignUpResultDto signUp(SignUpInfoDto signUpInfoDto) {
@@ -103,7 +103,7 @@ public class UserService {
         String newAccessToken = accessTokenUtility.createJsonWebToken(newAuthToken);
         String newRefreshToken = refreshTokenUtility.createRefreshJsonWebToken(newAuthToken);
 
-        refreshTokenRepository.save(new UserRefreshToken(userUid, newRefreshToken));
+        redisRefreshTokenRepository.save(new UserRefreshToken(userUid, newRefreshToken));
 
         return new JwtDto(newAccessToken, newRefreshToken);
     }
