@@ -10,7 +10,8 @@ import com.fastcampus.finalproject.config.security.jwt.handler.JwtAuthentication
 import com.fastcampus.finalproject.config.security.jwt.provider.CustomAuthenticationProvider;
 import com.fastcampus.finalproject.config.security.jwt.utils.AccessTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.RefreshTokenUtility;
-import com.fastcampus.finalproject.repository.RefreshTokenRepository;
+import com.fastcampus.finalproject.repository.RedisAccessTokenRepository;
+import com.fastcampus.finalproject.repository.RedisRefreshTokenRepository;
 import com.fastcampus.finalproject.repository.SocialLoginUserRepository;
 import com.fastcampus.finalproject.repository.UserRepository;
 import com.fastcampus.finalproject.service.auth.CustomOAuth2UserService;
@@ -53,7 +54,8 @@ public class SecurityConfig {
 
     private final AccessTokenUtility accessTokenUtility;
     private final RefreshTokenUtility refreshTokenUtility;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisAccessTokenRepository redisAccessTokenRepository;
+    private final RedisRefreshTokenRepository redisRefreshTokenRepository;
     private final UserRepository userRepository;
     private final SocialLoginUserRepository socialLoginUserRepository;
     private final CustomUserDetailsService userDetailsService;
@@ -61,10 +63,14 @@ public class SecurityConfig {
     private static String CLIENT_PROPERTY_KEY = "spring.security.oauth2.client.registration.";
 
 
-    public SecurityConfig(AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, UserRepository userRepository, SocialLoginUserRepository socialLoginUserRepository, Environment env) {
+    public SecurityConfig(AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility,
+                          RedisAccessTokenRepository redisAccessTokenRepository, RedisRefreshTokenRepository redisRefreshTokenRepository,
+                          CustomUserDetailsService customUserDetailsService,
+                          UserRepository userRepository, SocialLoginUserRepository socialLoginUserRepository, Environment env) {
         this.accessTokenUtility = accessTokenUtility;
         this.refreshTokenUtility = refreshTokenUtility;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.redisAccessTokenRepository = redisAccessTokenRepository;
+        this.redisRefreshTokenRepository = redisRefreshTokenRepository;
         this.userDetailsService = customUserDetailsService;
         this.userRepository = userRepository;
         this.socialLoginUserRepository = socialLoginUserRepository;
@@ -121,7 +127,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(accessTokenUtility);
+        return new JwtAuthorizationFilter(this.accessTokenUtility, this.redisAccessTokenRepository);
     }
 
 
@@ -141,7 +147,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return new JwtAuthenticationSuccessHandler(accessTokenUtility, refreshTokenUtility, refreshTokenRepository);
+        return new JwtAuthenticationSuccessHandler(this.accessTokenUtility, this.refreshTokenUtility, this.redisAccessTokenRepository, this.redisRefreshTokenRepository);
     }
 
     @Bean

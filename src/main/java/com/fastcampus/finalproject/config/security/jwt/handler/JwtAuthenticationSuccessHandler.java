@@ -4,8 +4,10 @@ import com.fastcampus.finalproject.config.security.jwt.utils.AccessTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.RefreshTokenUtility;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
 import com.fastcampus.finalproject.dto.response.JwtDto;
+import com.fastcampus.finalproject.entity.UserAccessToken;
 import com.fastcampus.finalproject.entity.UserRefreshToken;
-import com.fastcampus.finalproject.repository.RefreshTokenRepository;
+import com.fastcampus.finalproject.repository.RedisAccessTokenRepository;
+import com.fastcampus.finalproject.repository.RedisRefreshTokenRepository;
 import com.fastcampus.finalproject.service.auth.dto.OAuthUserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,12 +23,15 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private final AccessTokenUtility accessTokenUtility;
     private final RefreshTokenUtility refreshTokenUtility;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisAccessTokenRepository redisAccessTokenRepository;
+    private final RedisRefreshTokenRepository redisRefreshTokenRepository;
 
-    public JwtAuthenticationSuccessHandler(AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility, RefreshTokenRepository refreshTokenRepository) {
+    public JwtAuthenticationSuccessHandler(AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility,
+                                           RedisAccessTokenRepository redisAccessTokenRepository, RedisRefreshTokenRepository redisRefreshTokenRepository) {
         this.accessTokenUtility = accessTokenUtility;
         this.refreshTokenUtility = refreshTokenUtility;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.redisAccessTokenRepository = redisAccessTokenRepository;
+        this.redisRefreshTokenRepository = redisRefreshTokenRepository;
     }
 
     @Override
@@ -42,7 +47,9 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         JwtDto jwtDto = new JwtDto(accessToken, refreshToken);
         String serializedJwtDto = new ObjectMapper().writeValueAsString(new ResponseWrapper<>(jwtDto).ok());
 
-        refreshTokenRepository.save(new UserRefreshToken((Long) authentication.getPrincipal(), refreshToken));
+        Long uid = (Long) authentication.getPrincipal();
+        redisAccessTokenRepository.save(new UserAccessToken(uid, accessToken));
+        redisRefreshTokenRepository.save(new UserRefreshToken(uid, refreshToken));
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
