@@ -86,7 +86,9 @@ public class ProjectController {
      * */
     @PostMapping("/projects/{projectId}/avatar")
     public ResponseWrapper<CompleteAvatarPageResponse> addAvatarInfo(@PathVariable Long projectId, @RequestBody AvatarPageRequest request) {
-        return new ResponseWrapper<>(projectService.addAvatarInfo(projectId, request))
+        CompleteAvatarPageResponse response = projectService.addAvatarInfo(projectId, request);
+        projectService.deleteOldestVideo(AuthUtil.getCurrentUserUid());
+        return new ResponseWrapper<>(response)
                 .ok();
     }
 
