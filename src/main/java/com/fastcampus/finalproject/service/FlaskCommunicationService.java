@@ -1,17 +1,11 @@
 package com.fastcampus.finalproject.service;
 
-import com.fastcampus.finalproject.config.RestTemplateConfig;
+import com.fastcampus.finalproject.config.WebClientConfig;
 import com.fastcampus.finalproject.config.YmlFlaskConfig;
-import com.fastcampus.finalproject.enums.FileType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.nio.charset.StandardCharsets;
 
 import static com.fastcampus.finalproject.dto.AudioDto.AudioRequest;
 import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
@@ -23,61 +17,28 @@ import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 @Slf4j
 public class FlaskCommunicationService {
 
-    private final ObjectMapper objectMapper;
     private final YmlFlaskConfig flaskConfig;
-    private final RestTemplateConfig restTemplateConfig;
+    private final WebClientConfig webClientConfig;
 
     public AudioResponse getAudioResult(AudioRequest request) {
-        try {
-            String params = objectMapper.writeValueAsString(request);
-
-            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
-            ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestAudioApi());
-            writeLogAboutResponse(responseEntity, FileType.AUDIO);
-
-            return objectMapper.readValue(responseEntity.getBody(), AudioResponse.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return webClientConfig.webClient()
+                .post()
+                .uri(flaskConfig.getRequestAudioApi())
+                .bodyValue(request)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(AudioResponse.class)
+                .block();
     }
 
     public VideoResponse getVideoResult(VideoRequest request) {
-        try {
-            String params = objectMapper.writeValueAsString(request);
-
-            HttpEntity<String> entity = getHttpEntity(params, getHttpHeaders());
-            ResponseEntity<String> responseEntity = getResponseEntity(entity, flaskConfig.getRequestVideoApi());
-            writeLogAboutResponse(responseEntity, FileType.VIDEO);
-
-            return objectMapper.readValue(responseEntity.getBody(), VideoResponse.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private HttpHeaders getHttpHeaders() {
-        //헤더 설정
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
-        return httpHeaders;
-    }
-
-    private HttpEntity<String> getHttpEntity(String params, HttpHeaders httpHeaders) throws JsonProcessingException {
-        //HttpEntity에 헤더 및 params 설정
-        return new HttpEntity<>(params, httpHeaders);
-    }
-
-    private ResponseEntity<String> getResponseEntity(HttpEntity<String> entity, String requestApi) {
-        //RestTemplate의 exchange 메서드로 URL에 httpEntity와 함께 요청하기
-        return restTemplateConfig.restTemplate().exchange(
-                requestApi,
-                HttpMethod.POST,
-                entity,
-                String.class);
-    }
-
-    private void writeLogAboutResponse(ResponseEntity<String> responseEntity, FileType fileType) {
-        log.info(fileType.getValue() + " responseCode: {}", responseEntity.getStatusCode());
-        log.info(fileType.getValue() + " responseBody: {}", responseEntity.getBody());
+        return webClientConfig.webClient()
+                .post()
+                .uri(flaskConfig.getRequestVideoApi())
+                .bodyValue(request)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(VideoResponse.class)
+                .block();
     }
 }
