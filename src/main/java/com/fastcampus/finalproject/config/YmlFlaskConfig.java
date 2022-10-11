@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class YmlFlaskConfig {
 
+    private String baseUrl;
     private String imagePath;
     private String filePath;
     private String underBar;
