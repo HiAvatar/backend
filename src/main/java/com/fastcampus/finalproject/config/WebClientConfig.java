@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class WebClientConfig {
 
-    private YmlFlaskConfig flaskConfig;
+    private final YmlFlaskConfig flaskConfig;
 
     /**
      * Mono/Flux 퍼블리셔에 대한 timeout 설정 (HTTP에 대한 timeout이 아님)
