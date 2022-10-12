@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.service;
 
+import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.config.security.jwt.utils.AccessTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.RefreshTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.TokenValidityCode;
@@ -17,6 +18,7 @@ import com.fastcampus.finalproject.exception.token.AccessTokenStillValidExceptio
 import com.fastcampus.finalproject.exception.DuplicateIdException;
 import com.fastcampus.finalproject.exception.token.RefreshTokenInvalidException;
 import com.fastcampus.finalproject.repository.NativeLoginUserRepository;
+import com.fastcampus.finalproject.repository.RedisAccessTokenRepository;
 import com.fastcampus.finalproject.repository.RedisRefreshTokenRepository;
 import com.fastcampus.finalproject.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,15 +38,19 @@ public class UserService {
     private final NativeLoginUserRepository nativeLoginUserRepository;
     private final AccessTokenUtility accessTokenUtility;
     private final RefreshTokenUtility refreshTokenUtility;
+    private final RedisAccessTokenRepository redisAccessTokenRepository;
     private final RedisRefreshTokenRepository redisRefreshTokenRepository;
 
 
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository, NativeLoginUserRepository nativeLoginUserRepository, AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility, RedisRefreshTokenRepository redisRefreshTokenRepository) {
+    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository, NativeLoginUserRepository nativeLoginUserRepository,
+                       AccessTokenUtility accessTokenUtility, RefreshTokenUtility refreshTokenUtility,
+                       RedisAccessTokenRepository redisAccessTokenRepository, RedisRefreshTokenRepository redisRefreshTokenRepository) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.userRepository = userRepository;
         this.nativeLoginUserRepository = nativeLoginUserRepository;
         this.accessTokenUtility = accessTokenUtility;
         this.refreshTokenUtility = refreshTokenUtility;
+        this.redisAccessTokenRepository = redisAccessTokenRepository;
         this.redisRefreshTokenRepository = redisRefreshTokenRepository;
     }
 
@@ -106,6 +112,11 @@ public class UserService {
         redisRefreshTokenRepository.save(new UserRefreshToken(userUid, newRefreshToken));
 
         return new JwtDto(newAccessToken, newRefreshToken);
+    }
+
+    public void logout() {
+        Long userId = AuthUtil.getCurrentUserUid();
+        redisAccessTokenRepository.deleteById(userId);
     }
 
 }
