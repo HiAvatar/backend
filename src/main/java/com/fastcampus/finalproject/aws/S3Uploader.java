@@ -31,10 +31,9 @@ public class S3Uploader {
     public void removeFile(String parentPath, FileType fileType, String fileName, String fileExtension) {
         amazonS3Client.deleteObject(new DeleteObjectRequest(bucket, parentPath + "/" + fileType.getValue() + "/" + fileName + fileExtension));
 
+        if(fileName == null) return;
         File file = new File(flaskConfig.getFilePath() + "/" + fileName + fileExtension);
-        if(file.exists()) {
-            removeLocalFile(file);
-        }
+        removeLocalFile(file);
     }
 
     /*

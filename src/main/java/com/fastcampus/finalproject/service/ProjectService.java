@@ -205,8 +205,10 @@ public class ProjectService {
         );
 
         String audioFilePath = flaskConfig.createAudioFilePath(audioResponse.getId());
-        byte[] audioBinaryFile = getAudioFileBinary(audioFilePath);
+        File file = new File(audioFilePath);
+        byte[] audioBinaryFile = getAudioFileBinary(file);
         String audioBase64toString = Base64.getEncoder().encodeToString(audioBinaryFile);
+        s3Uploader.removeLocalFile(file);
 
         if (audioResponse.getStatus().equals("Success")) {
             return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
@@ -215,8 +217,7 @@ public class ProjectService {
         }
     }
 
-    private static byte[] getAudioFileBinary(String filepath) {
-        File file = new File(filepath);
+    private static byte[] getAudioFileBinary(File file) {
         byte[] data = new byte[(int) file.length()];
         try (FileInputStream stream = new FileInputStream(file)) {
             stream.read(data, 0, data.length);
@@ -414,7 +415,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public AvatarPreviewResponse getAvatarPreview(AvatarPageRequest request) {
         String filepath = flaskConfig.createImageFilePath(request.getAvatarType(), request.getBgName());
-        byte[] fileBinary = getAudioFileBinary(filepath);
+        byte[] fileBinary = getAudioFileBinary(new File(filepath));
         String base64String = Base64.getEncoder().encodeToString(fileBinary);
 
         return new AvatarPreviewResponse(base64String);
