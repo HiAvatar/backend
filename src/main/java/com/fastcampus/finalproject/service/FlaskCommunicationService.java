@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import static com.fastcampus.finalproject.dto.AudioDto.AudioRequest;
 import static com.fastcampus.finalproject.dto.AudioDto.AudioResponse;
@@ -21,24 +22,28 @@ public class FlaskCommunicationService {
     private final WebClientConfig webClientConfig;
 
     public AudioResponse getAudioResult(AudioRequest request) {
-        return webClientConfig.webClient()
+        Mono<AudioResponse> response = webClientConfig.webClient()
                 .post()
                 .uri(flaskConfig.getRequestAudioApi())
                 .bodyValue(request)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(AudioResponse.class)
-                .block();
+                .bodyToMono(AudioResponse.class);
+
+        return response.block();
     }
 
     public VideoResponse getVideoResult(VideoRequest request) {
-        return webClientConfig.webClient()
+        log.info("getVideoResult 실행");
+        Mono<VideoResponse> response = webClientConfig.webClient()
                 .post()
                 .uri(flaskConfig.getRequestVideoApi())
                 .bodyValue(request)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(VideoResponse.class)
-                .block();
+                .doOnNext(result -> log.info("flask 서버 요청중..."));
+        log.info("getVideoResult 종료");
+        return response.block();
     }
 }
