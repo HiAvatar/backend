@@ -61,6 +61,12 @@ public class UserController {
         return new ResponseWrapper<>(newTokenPair).ok();
     }
 
+    @PostMapping("/logout")
+    public ResponseWrapper logOut() {
+        this.userService.logout();
+        return new ResponseWrapper().ok();
+    }
+
     @GetMapping("/test/authorization")
     public String validateAuthorizationProcess() {
         Long uid = AuthUtil.getCurrentUserUid();
