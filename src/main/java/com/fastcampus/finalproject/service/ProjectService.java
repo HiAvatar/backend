@@ -71,7 +71,7 @@ public class ProjectService {
      */
     @Transactional
     public CreateProjectResponse create(Long userUid) {
-        UserBasic user = userRepository.findById(userUid).get();
+        UserBasic user = userRepository.findById(userUid).orElseThrow();
         Project savedProject = projectRepository.save(new Project(user));
 
         List<Project> projects = projectRepository.findAllByUserUid(userUid);
