@@ -58,9 +58,9 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseWrapper logOut() {
-        this.userService.logout();
-        return new ResponseWrapper().ok();
+    public ResponseWrapper<Void> logOut() {
+        userService.logout();
+        return new ResponseWrapper<Void>().ok();
     }
 
     @GetMapping("/test/authorization")
