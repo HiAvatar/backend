@@ -2,13 +2,6 @@ package com.fastcampus.finalproject.controller;
 
 import com.fastcampus.finalproject.config.security.AuthUtil;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
-import com.fastcampus.finalproject.dto.request.NewPasswordDto;
-import com.fastcampus.finalproject.dto.request.SignUpInfoDto;
-import com.fastcampus.finalproject.dto.request.auth.IdDto;
-import com.fastcampus.finalproject.dto.request.auth.TokenPairDto;
-import com.fastcampus.finalproject.dto.response.IdAvailabilityDto;
-import com.fastcampus.finalproject.dto.response.JwtDto;
-import com.fastcampus.finalproject.dto.response.SignUpResultDto;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.enums.LoginType;
 import com.fastcampus.finalproject.repository.UserRepository;
@@ -20,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.Optional;
+
+import static com.fastcampus.finalproject.dto.AuthDto.JwtDto;
+import static com.fastcampus.finalproject.dto.UserDto.*;
 
 @RestController
 public class UserController {
@@ -33,38 +29,38 @@ public class UserController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseWrapper<SignUpResultDto> signUp(@RequestBody @Valid SignUpInfoDto signUpInfoDto) {
-        SignUpResultDto result = userService.signUp(signUpInfoDto);
+    public ResponseWrapper<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
+        SignUpResponse result = userService.signUp(signUpRequest);
 
         return new ResponseWrapper<>(result).ok();
     }
 
     @PostMapping("/sign-up/check/duplicate-id")
-    public ResponseWrapper<IdAvailabilityDto> checkDuplicateId(@RequestBody @Valid IdDto idDto) {
-        Optional<UserBasic> userBasic = userRepository.findByUserNameAndLoginType(idDto.getId(), LoginType.NATIVE);
+    public ResponseWrapper<DuplicateIdResponse> checkDuplicateId(@RequestBody @Valid DuplicateIdRequest duplicateIdRequest) {
+        Optional<UserBasic> userBasic = userRepository.findByUserNameAndLoginType(duplicateIdRequest.getId(), LoginType.NATIVE);
         boolean isIdAvailable = userBasic.isEmpty();
 
-        return new ResponseWrapper<>(new IdAvailabilityDto(isIdAvailable)).ok();
+        return new ResponseWrapper<>(new DuplicateIdResponse(isIdAvailable)).ok();
     }
 
     @PostMapping("/my-page")
-    public ResponseWrapper changePassword(@RequestBody @Valid NewPasswordDto newPasswordDto) {
+    public ResponseWrapper<Void> changePassword(@RequestBody @Valid NewPasswordRequest newPasswordRequest) {
         Long userId = AuthUtil.getCurrentUserUid();
-        userService.changePassword(userId, newPasswordDto);
+        userService.changePassword(userId, newPasswordRequest);
 
-        return new ResponseWrapper().ok();
+        return new ResponseWrapper<Void>().ok();
     }
 
     @PostMapping("/token/refresh")
-    public ResponseWrapper<JwtDto> issueNewTokenPair(@RequestBody TokenPairDto tokenPairDto) {
-        JwtDto newTokenPair = userService.issueNewTokenPairs(tokenPairDto);
+    public ResponseWrapper<JwtDto> issueNewTokenPair(@RequestBody TokenPairResponse tokenPairResponse) {
+        JwtDto newTokenPair = userService.issueNewTokenPairs(tokenPairResponse);
         return new ResponseWrapper<>(newTokenPair).ok();
     }
 
     @PostMapping("/logout")
-    public ResponseWrapper logOut() {
-        this.userService.logout();
-        return new ResponseWrapper().ok();
+    public ResponseWrapper<Void> logOut() {
+        userService.logout();
+        return new ResponseWrapper<Void>().ok();
     }
 
     @GetMapping("/test/authorization")
