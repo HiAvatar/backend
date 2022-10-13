@@ -2,8 +2,8 @@ package com.fastcampus.finalproject.config.security.jwt.handler;
 
 import com.fastcampus.finalproject.config.security.jwt.utils.AccessTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.RefreshTokenUtility;
+import com.fastcampus.finalproject.dto.AuthDto;
 import com.fastcampus.finalproject.dto.ResponseWrapper;
-import com.fastcampus.finalproject.dto.response.JwtDto;
 import com.fastcampus.finalproject.entity.UserAccessToken;
 import com.fastcampus.finalproject.entity.UserRefreshToken;
 import com.fastcampus.finalproject.repository.RedisAccessTokenRepository;
@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static com.fastcampus.finalproject.dto.AuthDto.*;
 
 public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
