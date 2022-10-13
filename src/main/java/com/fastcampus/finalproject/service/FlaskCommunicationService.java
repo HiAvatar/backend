@@ -28,7 +28,8 @@ public class FlaskCommunicationService {
                 .bodyValue(request)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(AudioResponse.class);
+                .bodyToMono(AudioResponse.class)
+                .doOnNext(result -> log.info("flask 서버 요청중...(audioTexts:{})", request.getText()));
 
         return response.block();
     }
