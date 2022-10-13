@@ -63,6 +63,7 @@ pipeline {
                     sh "docker pull ${DOCKERHUB_ID}/${IMAGE_NAME}"
                     sh "docker-compose stop ${CONTAINER_NAME}"
 		    sh "docker-compose up -d"
+		    sh "docker image prune -f"
                 }
             }
         }
