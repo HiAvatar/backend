@@ -3,13 +3,11 @@ package com.fastcampus.finalproject.dto;
 import com.fastcampus.finalproject.entity.Audio;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
-import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
