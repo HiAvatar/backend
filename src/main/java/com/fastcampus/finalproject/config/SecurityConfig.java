@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.client.registration.InMemoryClientReg
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.web.FilterChainProxy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -82,6 +83,9 @@ public class SecurityConfig {
         httpSecurity
                 .csrf().disable()
                 .formLogin().disable();
+
+        httpSecurity
+                .logout().disable();
 
         httpSecurity
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
