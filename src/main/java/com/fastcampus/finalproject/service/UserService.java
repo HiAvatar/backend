@@ -3,18 +3,14 @@ package com.fastcampus.finalproject.service;
 import com.fastcampus.finalproject.config.security.jwt.utils.AccessTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.RefreshTokenUtility;
 import com.fastcampus.finalproject.config.security.jwt.utils.TokenValidityCode;
-import com.fastcampus.finalproject.dto.request.NewPasswordDto;
-import com.fastcampus.finalproject.dto.request.SignUpInfoDto;
-import com.fastcampus.finalproject.dto.request.auth.TokenPairDto;
-import com.fastcampus.finalproject.dto.response.JwtDto;
-import com.fastcampus.finalproject.dto.response.SignUpResultDto;
+import com.fastcampus.finalproject.dto.AuthDto.JwtDto;
 import com.fastcampus.finalproject.entity.NativeLoginUser;
 import com.fastcampus.finalproject.entity.UserBasic;
 import com.fastcampus.finalproject.entity.UserRefreshToken;
 import com.fastcampus.finalproject.enums.LoginType;
+import com.fastcampus.finalproject.exception.DuplicateIdException;
 import com.fastcampus.finalproject.exception.token.AccessTokenInvalidException;
 import com.fastcampus.finalproject.exception.token.AccessTokenStillValidException;
-import com.fastcampus.finalproject.exception.DuplicateIdException;
 import com.fastcampus.finalproject.exception.token.RefreshTokenInvalidException;
 import com.fastcampus.finalproject.repository.NativeLoginUserRepository;
 import com.fastcampus.finalproject.repository.RedisRefreshTokenRepository;
@@ -27,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static com.fastcampus.finalproject.dto.UserDto.*;
 
 @Service
 public class UserService {
@@ -48,9 +46,9 @@ public class UserService {
         this.redisRefreshTokenRepository = redisRefreshTokenRepository;
     }
 
-    public SignUpResultDto signUp(SignUpInfoDto signUpInfoDto) {
-        String userId = signUpInfoDto.getId();
-        String userPassword = signUpInfoDto.getPassword();
+    public SignUpResponse signUp(SignUpRequest signUpRequest) {
+        String userId = signUpRequest.getId();
+        String userPassword = signUpRequest.getPassword();
 
         Optional<UserBasic> userBasic = userRepository.findByUserNameAndLoginType(userId, LoginType.NATIVE);
 
@@ -61,28 +59,24 @@ public class UserService {
         UserBasic signedUpUser = userRepository.save(new UserBasic(userId, LoginType.NATIVE));
         nativeLoginUserRepository.save(new NativeLoginUser(bCryptPasswordEncoder.encode(userPassword), LocalDateTime.now(), signedUpUser));
 
-        return new SignUpResultDto(signedUpUser.getUserName());
+        return new SignUpResponse(signedUpUser.getUserName());
     }
 
-    public boolean changePassword(Long userUid, NewPasswordDto newPasswordDto) {
+    public void changePassword(Long userUid, NewPasswordRequest newPasswordRequest) {
         Optional<NativeLoginUser> nativeLoginUserOptional = nativeLoginUserRepository.findByUser(new UserBasic(userUid));
 
-        if (nativeLoginUserOptional.isEmpty()) {
-            return false;
-        }
+        if (nativeLoginUserOptional.isEmpty()) return;
 
         NativeLoginUser nativeLoginUser = nativeLoginUserOptional.get();
-        nativeLoginUser.changePassword(bCryptPasswordEncoder.encode(newPasswordDto.getNewPassword()));
+        nativeLoginUser.changePassword(bCryptPasswordEncoder.encode(newPasswordRequest.getNewPassword()));
         nativeLoginUser.changeLastUpdatedTime(LocalDateTime.now());
 
         nativeLoginUserRepository.save(nativeLoginUser);
-
-        return true;
     }
 
-    public JwtDto issueNewTokenPairs(TokenPairDto tokenPairDto) {
-        String accessToken = tokenPairDto.getAccessToken();
-        String refreshToken = tokenPairDto.getRefreshToken();
+    public JwtDto issueNewTokenPairs(TokenPairResponse tokenPairResponse) {
+        String accessToken = tokenPairResponse.getAccessToken();
+        String refreshToken = tokenPairResponse.getRefreshToken();
 
         switch (accessTokenUtility.evaluateTokenValidity(accessToken)) {
             case VALID:
