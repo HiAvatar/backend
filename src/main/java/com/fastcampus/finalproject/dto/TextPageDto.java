@@ -3,13 +3,18 @@ package com.fastcampus.finalproject.dto;
 import com.fastcampus.finalproject.entity.Audio;
 import com.fastcampus.finalproject.entity.Project;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
+import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.fastcampus.finalproject.enums.ProjectDefaultType.EMPTY;
 
 public class TextPageDto {
 
@@ -155,16 +160,28 @@ public class TextPageDto {
 
         public GetTextPageResponse(Project project, List<TextDto> splitTextList, TextPageDummyDto dummyData) {
             Audio audio = project.getAudio();
-            this.texts = audio.getTexts();
+            this.texts = getBlankIfInitProject(audio.getTexts());
             this.language = audio.getLanguage();
             this.sex = audio.getSex();
             this.characterName = audio.getCharacterVoice();
             this.speed = audio.getSpeed();
             this.pitch = audio.getPitch();
             this.sentenceSpacing = audio.getSentenceSpacing();
-            this.splitTextList = splitTextList;
+            this.splitTextList = getEmptyListIfInitProject(audio.getTexts(), splitTextList);
             this.totalAudioUrl = project.getTotalAudioUrl();
             this.dummyData = dummyData;
+        }
+
+        private String getBlankIfInitProject(String texts) {
+            return isEmptyTexts(texts) ? "" : texts;
+        }
+
+        private List<TextDto> getEmptyListIfInitProject(String texts, List<TextDto> splitTextList) {
+            return isEmptyTexts(texts) ? Collections.emptyList() : splitTextList;
+        }
+
+        private boolean isEmptyTexts(String texts) {
+            return texts.equals(EMPTY.getValue());
         }
 
         @Data
