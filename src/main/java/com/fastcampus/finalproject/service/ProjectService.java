@@ -107,7 +107,7 @@ public class ProjectService {
     /**
      * 프로젝트 및 영상 히스토리 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public GetHistoryResponse getHistory(Long userUid) {
         List<ProjectDto> projectDtos = projectRepository.findAllByUserUid(userUid)
                 .stream()
