@@ -152,7 +152,7 @@ public class ProjectService {
                 .map(String::trim)
                 .collect(Collectors.toList());
 
-        if(textList.size() != request.getSplitTextList().size()) {
+        if (textList.size() != request.getSplitTextList().size()) {
             throw new NotSameSizeTwoListsException();
         }
     }
@@ -187,7 +187,7 @@ public class ProjectService {
     private String saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
         byte[] decode = Base64.getDecoder().decode(String.valueOf(audioFileBase64));
         File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
-        try (FileOutputStream fos = new FileOutputStream(target)){
+        try (FileOutputStream fos = new FileOutputStream(target)) {
             fos.write(decode);
             fos.close();
             return uuid + "_" + audioFileName;
@@ -275,14 +275,21 @@ public class ProjectService {
     private CompleteAvatarPageResponse getCompleteAvatarPageResponse(Project findProject, VideoResponse videoResponse) {
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.VIDEO, findProject);
-
             s3Uploader.removeLocalFile(file); // 비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
-            Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(0, file.getName().lastIndexOf(".")), savedFileBucketUrl, findProject.getUser()));
+            Video savedVideo = videoRepository.save(getVideo(findProject, file));
+
             return new CompleteAvatarPageResponse(videoResponse.getStatus(), savedVideo);
         } else {
             return new CompleteAvatarPageResponse(videoResponse.getStatus());
         }
+    }
+
+    private Video getVideo(Project findProject, File file) {
+        return Video.builder()
+                .videoFileName(file.getName().substring(0, file.getName().lastIndexOf(".")))
+                .videoUrl(getSavedFileBucketUrl(file, FileType.VIDEO, findProject))
+                .user(findProject.getUser())
+                .build();
     }
 
     @Transactional
@@ -300,7 +307,7 @@ public class ProjectService {
 
     /**
      * 텍스트 페이지 임시 저장
-     * */
+     */
     @Transactional
     public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
@@ -311,7 +318,7 @@ public class ProjectService {
 
     /**
      * 아바타 페이지 임시 저장
-     * */
+     */
     @Transactional
     public void addTempAvatarInfo(Long projectId, AvatarPageRequest request) {
         Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
@@ -433,7 +440,7 @@ public class ProjectService {
     }
 
     private void validateAccessOnCurrentUser(UserBasic user) {
-        if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
+        if (!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
             throw new NoCorrectProjectAccessException();
         }
     }
