@@ -16,7 +16,7 @@ import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FlaskCommunicationService {
+public class FlaskService {
 
     private final YmlFlaskConfig flaskConfig;
     private final WebClientConfig webClientConfig;

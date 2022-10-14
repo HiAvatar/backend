@@ -12,6 +12,7 @@ import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarList;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.FileType;
+import com.fastcampus.finalproject.enums.FlaskResponseType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
@@ -42,6 +43,7 @@ import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 import static com.fastcampus.finalproject.dto.ProjectHistoryDto.GetHistoryResponse.ProjectDto;
 import static com.fastcampus.finalproject.dto.ProjectHistoryDto.GetHistoryResponse.VideoDto;
 import static com.fastcampus.finalproject.dto.TextPageDto.GetTextPageResponse.*;
+import static com.fastcampus.finalproject.enums.FlaskResponseType.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
 import static com.fastcampus.finalproject.enums.SexType.MALE;
@@ -146,11 +148,11 @@ public class ProjectService {
     }
 
     private TotalAudioSyntheticResponse getTotalAudioSyntheticResponse(Project findProject, AudioResponse audioResponse) {
-        if (audioResponse.getStatus().equals("Success")) {
+        if (audioResponse.getStatus().equals(SUCCESS.getValue())) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
-            return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
+            return new TotalAudioSyntheticResponse(SUCCESS.getValue(), savedFileBucketUrl);
         } else {
-            return new TotalAudioSyntheticResponse("Failed", null);
+            return new TotalAudioSyntheticResponse(FAILED.getValue(), null);
         }
     }
 
