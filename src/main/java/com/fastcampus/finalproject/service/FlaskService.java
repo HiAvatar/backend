@@ -47,4 +47,16 @@ public class FlaskService {
         log.info("getVideoResult 종료");
         return response.block();
     }
+
+    public AudioRequest getAudioRequest(String texts) {
+        return AudioRequest.builder()
+                .text(texts)
+                .narration("none")
+                .path("result")
+                .build();
+    }
+
+    public AudioResponse getAudioResponse(AudioRequest request) {
+        return getAudioResult(request);
+    }
 }
