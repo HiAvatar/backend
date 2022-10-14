@@ -132,11 +132,20 @@ public class ProjectService {
         validateSameTextsAndSplitTextList(request);
 
         request.changeAudioInfo(findProject.getAudio());
+        return getTotalAudioSyntheticResponse(findProject, getAudioResponseFromFlask(findProject));
+    }
 
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
-        );
+    private AudioResponse getAudioResponseFromFlask(Project findProject) {
+        AudioRequest audioRequest = AudioRequest.builder()
+                .text(findProject.getAudio().getTexts())
+                .narration("none")
+                .path("result")
+                .build();
 
+        return flaskCommunicationService.getAudioResult(audioRequest);
+    }
+
+    private TotalAudioSyntheticResponse getTotalAudioSyntheticResponse(Project findProject, AudioResponse audioResponse) {
         if (audioResponse.getStatus().equals("Success")) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
