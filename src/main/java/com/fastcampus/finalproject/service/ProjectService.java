@@ -143,7 +143,7 @@ public class ProjectService {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TotalAudioSyntheticResponse(SUCCESS.getValue(), savedFileBucketUrl);
         } else {
-            return new TotalAudioSyntheticResponse(FAILED.getValue(), null);
+            return new TotalAudioSyntheticResponse(FAILED.getValue());
         }
     }
 
