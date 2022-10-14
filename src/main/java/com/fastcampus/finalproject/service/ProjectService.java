@@ -12,7 +12,6 @@ import com.fastcampus.finalproject.entity.dummy.DummyAvatarDivision;
 import com.fastcampus.finalproject.entity.dummy.DummyAvatarList;
 import com.fastcampus.finalproject.entity.dummy.DummyVoice;
 import com.fastcampus.finalproject.enums.FileType;
-import com.fastcampus.finalproject.enums.FlaskResponseType;
 import com.fastcampus.finalproject.enums.ProjectDefaultType;
 import com.fastcampus.finalproject.enums.SexType;
 import com.fastcampus.finalproject.exception.NoCorrectProjectAccessException;
@@ -60,7 +59,7 @@ public class ProjectService {
     private final DummyAvatarListRepository dummyAvatarListRepository;
     private final DummyAvatarDivisionRepository dummyAvatarDivisionRepository;
     private final DummyBackgroundRepository dummyBackgroundRepository;
-    private final FlaskCommunicationService flaskCommunicationService;
+    private final FlaskService flaskService;
 
     private final S3Uploader s3Uploader;
     private final YmlFlaskConfig flaskConfig;
@@ -134,17 +133,9 @@ public class ProjectService {
         validateSameTextsAndSplitTextList(request);
 
         request.changeAudioInfo(findProject.getAudio());
-        return getTotalAudioSyntheticResponse(findProject, getAudioResponseFromFlask(findProject));
-    }
 
-    private AudioResponse getAudioResponseFromFlask(Project findProject) {
-        AudioRequest audioRequest = AudioRequest.builder()
-                .text(findProject.getAudio().getTexts())
-                .narration("none")
-                .path("result")
-                .build();
-
-        return flaskCommunicationService.getAudioResult(audioRequest);
+        AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
+        return getTotalAudioSyntheticResponse(findProject, flaskService.getAudioResponse(audioRequest));
     }
 
     private TotalAudioSyntheticResponse getTotalAudioSyntheticResponse(Project findProject, AudioResponse audioResponse) {
@@ -210,9 +201,8 @@ public class ProjectService {
      */
     @Transactional
     public SentenceInputResponse getAudioFileAboutOneSentence(SentenceInputRequest request) {
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioRequest(request.getText(), "none", "result")
-        );
+        AudioRequest audioRequest = flaskService.getAudioRequest(request.getText());
+        AudioResponse audioResponse = flaskService.getAudioResult(audioRequest);
 
         String audioFilePath = flaskConfig.createAudioFilePath(audioResponse.getId());
         File file = new File(audioFilePath);
@@ -247,7 +237,8 @@ public class ProjectService {
 
         findProject.getAudio().changeTexts(texts.getTexts());
 
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
+        AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
+        AudioResponse audioResponse = flaskService.getAudioResult(audioRequest);
 
         if (audioResponse.getStatus().equals("Success")) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
@@ -268,7 +259,7 @@ public class ProjectService {
         findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
         //영상 합성
-        VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
+        VideoResponse videoResponse = flaskService.getVideoResult(
                 new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
         );
 
