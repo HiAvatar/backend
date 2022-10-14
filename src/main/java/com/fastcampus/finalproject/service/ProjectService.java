@@ -42,6 +42,7 @@ import static com.fastcampus.finalproject.dto.VideoDto.VideoResponse;
 import static com.fastcampus.finalproject.dto.ProjectHistoryDto.GetHistoryResponse.ProjectDto;
 import static com.fastcampus.finalproject.dto.ProjectHistoryDto.GetHistoryResponse.VideoDto;
 import static com.fastcampus.finalproject.dto.TextPageDto.GetTextPageResponse.*;
+import static com.fastcampus.finalproject.enums.FlaskResponseType.*;
 import static com.fastcampus.finalproject.enums.LanguageType.*;
 import static com.fastcampus.finalproject.enums.SexType.FEMALE;
 import static com.fastcampus.finalproject.enums.SexType.MALE;
@@ -58,7 +59,7 @@ public class ProjectService {
     private final DummyAvatarListRepository dummyAvatarListRepository;
     private final DummyAvatarDivisionRepository dummyAvatarDivisionRepository;
     private final DummyBackgroundRepository dummyBackgroundRepository;
-    private final FlaskCommunicationService flaskCommunicationService;
+    private final FlaskService flaskService;
 
     private final S3Uploader s3Uploader;
     private final YmlFlaskConfig flaskConfig;
@@ -84,9 +85,8 @@ public class ProjectService {
     private void deleteOldestProject(List<Project> projects) {
         if (projects.size() > 5) {
             Project removeProject = projects.get(projects.size() - 1);
-            log.info("삭제된 프로젝트 id = {}", removeProject.getId());
             projectRepository.delete(removeProject);
-            projects.remove(projects.size() - 1);
+            log.info("삭제된 프로젝트 id = {}", removeProject.getId());
 
             //프로젝트가 삭제되면 s3 폴더 삭제
             s3Uploader.removeFile(beMappedS3AudioPath(removeProject), FileType.AUDIO, removeProject.getAudioFileName(), flaskConfig.getAudioExtension());
@@ -108,7 +108,7 @@ public class ProjectService {
     /**
      * 프로젝트 및 영상 히스토리 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public GetHistoryResponse getHistory(Long userUid) {
         List<ProjectDto> projectDtos = projectRepository.findAllByUserUid(userUid)
                 .stream()
@@ -134,15 +134,16 @@ public class ProjectService {
 
         request.changeAudioInfo(findProject.getAudio());
 
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioRequest(findProject.getAudio().getTexts(), "none", "result")
-        );
+        AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
+        return getTotalAudioSyntheticResponse(findProject, flaskService.getAudioResponse(audioRequest));
+    }
 
-        if (audioResponse.getStatus().equals("Success")) {
+    private TotalAudioSyntheticResponse getTotalAudioSyntheticResponse(Project findProject, AudioResponse audioResponse) {
+        if (audioResponse.getStatus().equals(SUCCESS.getValue())) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
-            return new TotalAudioSyntheticResponse("Success", savedFileBucketUrl);
+            return new TotalAudioSyntheticResponse(SUCCESS.getValue(), savedFileBucketUrl);
         } else {
-            return new TotalAudioSyntheticResponse("Failed", null);
+            return new TotalAudioSyntheticResponse(FAILED.getValue());
         }
     }
 
@@ -151,7 +152,7 @@ public class ProjectService {
                 .map(String::trim)
                 .collect(Collectors.toList());
 
-        if(textList.size() != request.getSplitTextList().size()) {
+        if (textList.size() != request.getSplitTextList().size()) {
             throw new NotSameSizeTwoListsException();
         }
     }
@@ -186,7 +187,7 @@ public class ProjectService {
     private String saveUploadAudioFile(String audioFileBase64, String audioFileName, String uuid) {
         byte[] decode = Base64.getDecoder().decode(String.valueOf(audioFileBase64));
         File target = new File(flaskConfig.getFilePath() + uuid + "_" + audioFileName);
-        try (FileOutputStream fos = new FileOutputStream(target)){
+        try (FileOutputStream fos = new FileOutputStream(target)) {
             fos.write(decode);
             fos.close();
             return uuid + "_" + audioFileName;
@@ -200,9 +201,8 @@ public class ProjectService {
      */
     @Transactional
     public SentenceInputResponse getAudioFileAboutOneSentence(SentenceInputRequest request) {
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(
-                new AudioRequest(request.getText(), "none", "result")
-        );
+        AudioRequest audioRequest = flaskService.getAudioRequest(request.getText());
+        AudioResponse audioResponse = flaskService.getAudioSynthetic(audioRequest);
 
         String audioFilePath = flaskConfig.createAudioFilePath(audioResponse.getId());
         File file = new File(audioFilePath);
@@ -210,11 +210,7 @@ public class ProjectService {
         String audioBase64toString = Base64.getEncoder().encodeToString(audioBinaryFile);
         s3Uploader.removeLocalFile(file);
 
-        if (audioResponse.getStatus().equals("Success")) {
-            return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
-        } else {
-            return new SentenceInputResponse(audioResponse.getStatus());
-        }
+        return getSentenceInputResponse(audioResponse, audioBase64toString);
     }
 
     private static byte[] getAudioFileBinary(File file) {
@@ -227,6 +223,14 @@ public class ProjectService {
         return data;
     }
 
+    private SentenceInputResponse getSentenceInputResponse(AudioResponse audioResponse, String audioBase64toString) {
+        if (audioResponse.getStatus().equals("Success")) {
+            return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
+        } else {
+            return new SentenceInputResponse(audioResponse.getStatus());
+        }
+    }
+
     /**
      * 처음 텍스트 팝업창으로 저장
      */
@@ -237,8 +241,13 @@ public class ProjectService {
 
         findProject.getAudio().changeTexts(texts.getTexts());
 
-        AudioResponse audioResponse = flaskCommunicationService.getAudioResult(new AudioRequest(texts.getTexts(), "none", "result"));
+        AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
+        AudioResponse audioResponse = flaskService.getAudioSynthetic(audioRequest);
 
+        return getTextInputResponse(findProject, audioResponse);
+    }
+
+    private TextInputResponse getTextInputResponse(Project findProject, AudioResponse audioResponse) {
         if (audioResponse.getStatus().equals("Success")) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
@@ -257,21 +266,31 @@ public class ProjectService {
 
         findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
-        //영상 합성
-        VideoResponse videoResponse = flaskCommunicationService.getVideoResult(
-                new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
-        );
+        VideoRequest videoRequest = flaskService.getVideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName());
+        VideoResponse videoResponse = flaskService.getVideoResponse(videoRequest);
 
+        return getCompleteAvatarPageResponse(findProject, videoResponse);
+    }
+
+    private CompleteAvatarPageResponse getCompleteAvatarPageResponse(Project findProject, VideoResponse videoResponse) {
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
-            String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.VIDEO, findProject);
-
+            Video savedVideo = videoRepository.save(getVideo(findProject, file));
             s3Uploader.removeLocalFile(file); // 비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
-            Video savedVideo = videoRepository.save(new Video(findProject.getName(), file.getName().substring(0, file.getName().lastIndexOf(".")), savedFileBucketUrl, findProject.getUser()));
+
             return new CompleteAvatarPageResponse(videoResponse.getStatus(), savedVideo);
         } else {
             return new CompleteAvatarPageResponse(videoResponse.getStatus());
         }
+    }
+
+    private Video getVideo(Project findProject, File file) {
+        return Video.builder()
+                .name(findProject.getName())
+                .videoFileName(file.getName().substring(0, file.getName().lastIndexOf(".")))
+                .videoUrl(getSavedFileBucketUrl(file, FileType.VIDEO, findProject))
+                .user(findProject.getUser())
+                .build();
     }
 
     @Transactional
@@ -289,7 +308,7 @@ public class ProjectService {
 
     /**
      * 텍스트 페이지 임시 저장
-     * */
+     */
     @Transactional
     public void saveAudioInfo(Long projectId, TotalAudioSyntheticRequest request) {
         Project findProject = projectRepository.findWithUserById(projectId).orElseThrow(NoSuchElementException::new);
@@ -300,7 +319,7 @@ public class ProjectService {
 
     /**
      * 아바타 페이지 임시 저장
-     * */
+     */
     @Transactional
     public void addTempAvatarInfo(Long projectId, AvatarPageRequest request) {
         Project findProject = projectRepository.findById(projectId).orElseThrow(NoSuchElementException::new);
@@ -422,7 +441,7 @@ public class ProjectService {
     }
 
     private void validateAccessOnCurrentUser(UserBasic user) {
-        if(!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
+        if (!user.getUid().equals(AuthUtil.getCurrentUserUid())) {
             throw new NoCorrectProjectAccessException();
         }
     }

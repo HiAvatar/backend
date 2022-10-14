@@ -1,11 +1,15 @@
 package com.fastcampus.finalproject.entity;
 
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Video extends BaseTimeEntity {
 
     @Id
@@ -26,13 +30,11 @@ public class Video extends BaseTimeEntity {
     @JoinColumn(name = "USER_UID")
     private UserBasic user;
 
+    @Builder
     public Video(String name, String videoFileName, String videoUrl, UserBasic user) {
         this.name = name;
         this.videoFileName = videoFileName;
         this.videoUrl = videoUrl;
         this.user = user;
     }
-
-    public Video() {}
-
 }

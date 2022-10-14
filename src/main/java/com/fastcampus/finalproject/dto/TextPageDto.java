@@ -61,6 +61,10 @@ public class TextPageDto {
         private String result;
         private String totalAudioUrl;
 
+        public TotalAudioSyntheticResponse(String result) {
+            this.result = result;
+        }
+
         public TotalAudioSyntheticResponse(String result, String totalAudioUrl) {
             this.result = result;
             this.totalAudioUrl = totalAudioUrl;

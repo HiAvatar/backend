@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 public class VideoDto {
@@ -12,6 +13,7 @@ public class VideoDto {
         private String background;
         private String path;
 
+        @Builder
         public VideoRequest(String id, String avatar, String background, String path) {
             this.id = id;
             this.avatar = avatar;
