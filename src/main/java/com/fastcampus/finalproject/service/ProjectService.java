@@ -84,9 +84,8 @@ public class ProjectService {
     private void deleteOldestProject(List<Project> projects) {
         if (projects.size() > 5) {
             Project removeProject = projects.get(projects.size() - 1);
-            log.info("삭제된 프로젝트 id = {}", removeProject.getId());
             projectRepository.delete(removeProject);
-            projects.remove(projects.size() - 1);
+            log.info("삭제된 프로젝트 id = {}", removeProject.getId());
 
             //프로젝트가 삭제되면 s3 폴더 삭제
             s3Uploader.removeFile(beMappedS3AudioPath(removeProject), FileType.AUDIO, removeProject.getAudioFileName(), flaskConfig.getAudioExtension());
