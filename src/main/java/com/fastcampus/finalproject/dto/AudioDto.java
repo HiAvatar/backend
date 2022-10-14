@@ -1,5 +1,6 @@
 package com.fastcampus.finalproject.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 public class AudioDto {
@@ -11,6 +12,7 @@ public class AudioDto {
         private String narration;
         private String path;
 
+        @Builder
         public AudioRequest(String text, String narration, String path) {
             this.text = text;
             this.narration = narration;
