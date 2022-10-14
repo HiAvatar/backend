@@ -275,8 +275,8 @@ public class ProjectService {
     private CompleteAvatarPageResponse getCompleteAvatarPageResponse(Project findProject, VideoResponse videoResponse) {
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
-            s3Uploader.removeLocalFile(file); // 비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
             Video savedVideo = videoRepository.save(getVideo(findProject, file));
+            s3Uploader.removeLocalFile(file); // 비디오가 생성되면 더 이상 로컬에 있는 비디오 파일은 무의미. 바로 지워주도록 하자
 
             return new CompleteAvatarPageResponse(videoResponse.getStatus(), savedVideo);
         } else {
@@ -286,6 +286,7 @@ public class ProjectService {
 
     private Video getVideo(Project findProject, File file) {
         return Video.builder()
+                .name(findProject.getName())
                 .videoFileName(file.getName().substring(0, file.getName().lastIndexOf(".")))
                 .videoUrl(getSavedFileBucketUrl(file, FileType.VIDEO, findProject))
                 .user(findProject.getUser())
