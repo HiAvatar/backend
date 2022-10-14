@@ -202,7 +202,7 @@ public class ProjectService {
     @Transactional
     public SentenceInputResponse getAudioFileAboutOneSentence(SentenceInputRequest request) {
         AudioRequest audioRequest = flaskService.getAudioRequest(request.getText());
-        AudioResponse audioResponse = flaskService.getAudioResult(audioRequest);
+        AudioResponse audioResponse = flaskService.getAudioSynthetic(audioRequest);
 
         String audioFilePath = flaskConfig.createAudioFilePath(audioResponse.getId());
         File file = new File(audioFilePath);
@@ -238,7 +238,7 @@ public class ProjectService {
         findProject.getAudio().changeTexts(texts.getTexts());
 
         AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
-        AudioResponse audioResponse = flaskService.getAudioResult(audioRequest);
+        AudioResponse audioResponse = flaskService.getAudioSynthetic(audioRequest);
 
         if (audioResponse.getStatus().equals("Success")) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());

@@ -21,7 +21,7 @@ public class FlaskService {
     private final YmlFlaskConfig flaskConfig;
     private final WebClientConfig webClientConfig;
 
-    public AudioResponse getAudioResult(AudioRequest request) {
+    public AudioResponse getAudioSynthetic(AudioRequest request) {
         Mono<AudioResponse> response = webClientConfig.webClient()
                 .post()
                 .uri(flaskConfig.getRequestAudioApi())
@@ -34,7 +34,7 @@ public class FlaskService {
         return response.block();
     }
 
-    public VideoResponse getVideoResult(VideoRequest request) {
+    public VideoResponse getVideoSynthetic(VideoRequest request) {
         log.info("getVideoResult 실행");
         Mono<VideoResponse> response = webClientConfig.webClient()
                 .post()
@@ -45,6 +45,7 @@ public class FlaskService {
                 .bodyToMono(VideoResponse.class)
                 .doOnNext(result -> log.info("flask 서버 요청중..."));
         log.info("getVideoResult 종료");
+
         return response.block();
     }
 
@@ -57,7 +58,7 @@ public class FlaskService {
     }
 
     public AudioResponse getAudioResponse(AudioRequest request) {
-        return getAudioResult(request);
+        return getAudioSynthetic(request);
     }
 
     public VideoRequest getVideoRequest(String audioFileName, String avatarType, String bgName) {
@@ -70,6 +71,6 @@ public class FlaskService {
     }
 
     public VideoResponse getVideoResponse(VideoRequest request) {
-        return getVideoResult(request);
+        return getVideoSynthetic(request);
     }
 }
