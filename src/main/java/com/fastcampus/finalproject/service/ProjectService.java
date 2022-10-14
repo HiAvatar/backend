@@ -210,11 +210,7 @@ public class ProjectService {
         String audioBase64toString = Base64.getEncoder().encodeToString(audioBinaryFile);
         s3Uploader.removeLocalFile(file);
 
-        if (audioResponse.getStatus().equals("Success")) {
-            return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
-        } else {
-            return new SentenceInputResponse(audioResponse.getStatus());
-        }
+        return getSentenceInputResponse(audioResponse, audioBase64toString);
     }
 
     private static byte[] getAudioFileBinary(File file) {
@@ -225,6 +221,14 @@ public class ProjectService {
             throw new NoGetAudioFileBinaryException(e);
         }
         return data;
+    }
+
+    private SentenceInputResponse getSentenceInputResponse(AudioResponse audioResponse, String audioBase64toString) {
+        if (audioResponse.getStatus().equals("Success")) {
+            return new SentenceInputResponse(audioResponse.getStatus(), audioBase64toString);
+        } else {
+            return new SentenceInputResponse(audioResponse.getStatus());
+        }
     }
 
     /**
@@ -240,6 +244,10 @@ public class ProjectService {
         AudioRequest audioRequest = flaskService.getAudioRequest(findProject.getAudio().getTexts());
         AudioResponse audioResponse = flaskService.getAudioSynthetic(audioRequest);
 
+        return getTextInputResponse(findProject, audioResponse);
+    }
+
+    private TextInputResponse getTextInputResponse(Project findProject, AudioResponse audioResponse) {
         if (audioResponse.getStatus().equals("Success")) {
             String savedFileBucketUrl = saveAudioFileToS3(findProject, audioResponse.getId());
             return new TextInputResponse(audioResponse.getStatus(), savedFileBucketUrl);
@@ -261,6 +269,10 @@ public class ProjectService {
         VideoRequest videoRequest = flaskService.getVideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName());
         VideoResponse videoResponse = flaskService.getVideoResponse(videoRequest);
 
+        return getCompleteAvatarPageResponse(findProject, videoResponse);
+    }
+
+    private CompleteAvatarPageResponse getCompleteAvatarPageResponse(Project findProject, VideoResponse videoResponse) {
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
             String savedFileBucketUrl = getSavedFileBucketUrl(file, FileType.VIDEO, findProject);
