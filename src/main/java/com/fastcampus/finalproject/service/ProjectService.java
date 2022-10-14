@@ -258,10 +258,8 @@ public class ProjectService {
 
         findProject.getAvatar().changeAvatarInfo(request.getAvatarName(), request.getAvatarType(), request.getBgName());
 
-        //영상 합성
-        VideoResponse videoResponse = flaskService.getVideoResult(
-                new VideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName(), "result")
-        );
+        VideoRequest videoRequest = flaskService.getVideoRequest(findProject.getAudioFileName(), request.getAvatarType(), request.getBgName());
+        VideoResponse videoResponse = flaskService.getVideoResponse(videoRequest);
 
         if (videoResponse.getStatus().equals("Success")) {
             File file = new File(flaskConfig.createVideoFilePath(videoResponse.getId()));
