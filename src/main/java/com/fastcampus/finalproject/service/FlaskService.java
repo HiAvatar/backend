@@ -59,4 +59,17 @@ public class FlaskService {
     public AudioResponse getAudioResponse(AudioRequest request) {
         return getAudioResult(request);
     }
+
+    public VideoRequest getVideoRequest(String audioFileName, String avatarType, String bgName) {
+        return VideoRequest.builder()
+                .id(audioFileName)
+                .avatar(avatarType)
+                .background(bgName)
+                .path("result")
+                .build();
+    }
+
+    public VideoResponse getVideoResponse(VideoRequest request) {
+        return getVideoResult(request);
+    }
 }
