@@ -150,7 +150,12 @@
 <br>
 
 ## 👥 &nbsp;Contributor
+|이용승|조혜진|박민호|
+|:----:|:----:|:----:|
+|[@yonson](https://github.com/yongseungLeeDec)|[@Johyejin-119](https://github.com/Johyejin-119)|[@dev-minoflower](https://github.com/minoflower31)|
+|<img width="100" height="100" alt="image" src="https://user-images.githubusercontent.com/56334513/197153683-b2ee9de2-2b4c-4f09-ba7f-67c1d2db50fb.png">|<img width="100" height="100" alt="image" src="https://user-images.githubusercontent.com/56334513/197153793-463ca57b-0efc-457c-8b72-b8fc01102d16.png">|<img width="80" height="80" alt="image" src="https://user-images.githubusercontent.com/56334513/197157916-9d22c1db-44c9-429b-837a-119e095f2bdd.png">|
 
 <br>
 
 ## ☕️&nbsp;회고
+[Wiki 바로가기](https://github.com/HiAvatar/backend/wiki)
